@@ -1,4 +1,3 @@
-
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
@@ -8,12 +7,22 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Tạo thư mục lưu tệp mã hóa nếu chưa tồn tại
-if (!fs.existsSync('uploads')) fs.mkdirSync('uploads');
+const uploadDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+}
 
-const upload = multer({ dest: 'uploads/' });
+const upload = multer({ dest: uploadDir });
 
 app.use(express.json());
-app.use(express.static('public'));
+
+// Định vị chính xác thư mục giao diện tĩnh
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Trả về trang index.html cho trang chủ
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 
 // API Tải tệp mã hóa lên (Server không nhận và không lưu khóa)
 app.post('/api/upload', upload.single('encryptedFile'), (req, res) => {
@@ -23,10 +32,10 @@ app.post('/api/upload', upload.single('encryptedFile'), (req, res) => {
 
 // API Tải tệp mã hóa về
 app.get('/api/download/:fileId', (req, res) => {
-    const filePath = path.join(__dirname, 'uploads', req.params.fileId);
+    const filePath = path.join(uploadDir, req.params.fileId);
     if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'Không tìm thấy tệp' });
     res.download(filePath, 'encrypted.bin');
 });
 
-// Chạy server lắng nghe tất cả giao diện mạng (0.0.0.0 hỗ trợ truy cập từ điện thoại)
+// Chạy server
 app.listen(PORT, '0.0.0.0', () => console.log(`🚀 Server running at http://localhost:${PORT}`));
