@@ -17,8 +17,14 @@
             --text-muted: #94a3b8;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
-        
+        * { 
+            box-sizing: border-box; 
+            margin: 0; 
+            padding: 0; 
+            font-family: 'Inter', sans-serif; 
+            -webkit-tap-highlight-color: transparent; 
+        }
+
         body {
             background-color: var(--bg-color);
             color: var(--text-color);
@@ -30,7 +36,7 @@
         }
 
         .container { width: 100%; max-width: 580px; margin: 0 auto; }
-        
+
         .header { text-align: center; margin-bottom: 20px; }
         .header h1 {
             font-size: 1.8rem;
@@ -137,6 +143,49 @@
         }
 
         .hidden { display: none !important; }
+
+        /* Cố định khung bảng không bao giờ bị xô lệch */
+        .history-table, table {
+            width: 100%;
+            table-layout: fixed;
+            border-collapse: collapse;
+        }
+
+        .history-table th, .history-table td {
+            padding: 12px 8px;
+            text-align: left;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+
+        /* Kiểu dáng Badge hiển thị mã */
+        .code-badge {
+            font-family: monospace;
+            background: rgba(255, 255, 255, 0.08);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.85em;
+        }
+
+        .key-badge {
+            color: #ff79c6;
+            background: rgba(255, 121, 198, 0.1);
+        }
+
+        /* Nút Copy gọn nhẹ */
+        .btn-copy {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            font-size: 0.9em;
+            margin-left: 4px;
+            padding: 2px 4px;
+            transition: transform 0.1s;
+        }
+
+        .btn-copy:hover {
+            transform: scale(1.25);
+        }
 
         @media (max-width: 480px) {
             body { padding: 12px; }
