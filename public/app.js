@@ -1,5 +1,15 @@
 let selectedFile = null;
 
+// Hàm hỗ trợ sao chép văn bản vào bộ nhớ tạm
+function copyToClipboard(text, label) {
+    if (!text) return;
+    navigator.clipboard.writeText(text).then(() => {
+        alert(`Đã sao chép ${label} đầy đủ vào bộ nhớ tạm!`);
+    }).catch(err => {
+        console.error('Lỗi sao chép:', err);
+    });
+}
+
 // Tải lịch sử riêng từ LocalStorage của máy người gửi
 function loadLocalHistory() {
     const container = document.getElementById('historyTableContainer');
@@ -13,23 +23,34 @@ function loadLocalHistory() {
     }
 
     let html = `
-        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.8rem; color: #cbd5e1; white-space: nowrap;">
+        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.8rem; color: #cbd5e1; table-layout: fixed;">
             <thead>
                 <tr style="border-bottom: 1px solid #334155; color: #94a3b8;">
-                    <th style="padding: 8px 4px;">Mã Tệp (File ID)</th>
-                    <th style="padding: 8px 4px;">Khóa Giải Mã (Secret Key)</th>
-                    <th style="padding: 8px 4px;">Thời Gian</th>
+                    <th style="padding: 8px 4px; width: 38%;">Mã Tệp (File ID)</th>
+                    <th style="padding: 8px 4px; width: 38%;">Khóa Giải Mã (Secret Key)</th>
+                    <th style="padding: 8px 4px; width: 24%;">Thời Gian</th>
                 </tr>
             </thead>
             <tbody>
     `;
 
     history.forEach(item => {
+        const shortFileId = item.fileId ? (item.fileId.length > 10 ? item.fileId.substring(0, 8) + '...' : item.fileId) : '';
+        const shortKey = item.secretKey ? (item.secretKey.length > 10 ? item.secretKey.substring(0, 8) + '...' : item.secretKey) : '';
+
         html += `
             <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
-                <td style="padding: 8px 4px;"><code style="color: #818cf8;">${item.fileId.substring(0, 10)}...</code></td>
-                <td style="padding: 8px 4px;"><code style="color: #f43f5e;">${item.secretKey.substring(0, 10)}...</code></td>
-                <td style="padding: 8px 4px; color: #94a3b8;">${item.date}</td>
+                <td style="padding: 8px 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="Bấm để copy Mã tệp đầy đủ: ${item.fileId}">
+                    <code style="color: #818cf8; cursor: pointer; background: rgba(129, 140, 248, 0.1); padding: 2px 6px; border-radius: 4px;" onclick="copyToClipboard('${item.fileId}', 'Mã Tệp')">
+                        ${shortFileId} 📋
+                    </code>
+                </td>
+                <td style="padding: 8px 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="Bấm để copy Khóa giải mã đầy đủ: ${item.secretKey}">
+                    <code style="color: #f43f5e; cursor: pointer; background: rgba(244, 63, 94, 0.1); padding: 2px 6px; border-radius: 4px;" onclick="copyToClipboard('${item.secretKey}', 'Khóa Giải Mã')">
+                        ${shortKey} 📋
+                    </code>
+                </td>
+                <td style="padding: 8px 4px; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.date}</td>
             </tr>
         `;
     });
@@ -126,8 +147,8 @@ async function encryptAndUpload() {
         if (res.ok) {
             resBox.innerHTML = `
                 <div style="color: #4ade80; font-weight: 600; margin-bottom: 8px;">✅ Tải lên thành công!</div>
-                <div><strong>Mã Tệp (File ID):</strong> <code style="color: #cbd5e1;">${data.fileId}</code></div>
-                <div style="margin-top: 4px;"><strong>Khóa Giải Mã (Secret Key):</strong> <code style="color: #f43f5e;">${secretKeyHex}</code></div>
+                <div style="margin-bottom: 4px;"><strong>Mã Tệp (File ID):</strong> <code style="color: #cbd5e1; cursor: pointer;" onclick="copyToClipboard('${data.fileId}', 'Mã Tệp')">${data.fileId} 📋</code></div>
+                <div><strong>Khóa Giải Mã (Secret Key):</strong> <code style="color: #f43f5e; cursor: pointer;" onclick="copyToClipboard('${secretKeyHex}', 'Khóa Giải Mã')">${secretKeyHex} 📋</code></div>
             `;
             
             saveToLocalHistory(data.fileId, secretKeyHex);
