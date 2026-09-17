@@ -9,11 +9,11 @@
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         }
 
         body {
-            background-color: #0b0f19;
+            background-color: #0b1120;
             color: #f1f5f9;
             display: flex;
             justify-content: center;
@@ -22,7 +22,6 @@
             padding: 20px;
         }
 
-        /* Container được mở rộng lên 720px để cột thời gian không bị che khuất */
         .main-container {
             width: 100%;
             max-width: 720px;
@@ -32,36 +31,37 @@
         .header h1 {
             font-size: 2.2rem;
             color: #818cf8;
+            font-weight: 700;
             margin-bottom: 6px;
         }
 
         .header p {
             color: #94a3b8;
-            font-size: 0.95rem;
+            font-size: 0.92rem;
             margin-bottom: 24px;
         }
 
         /* Khung Tab Chuyển Đổi */
         .tab-container {
             display: flex;
-            background-color: #151c2c;
+            background-color: #131b2e;
             border-radius: 12px;
-            padding: 5px;
+            padding: 4px;
             margin-bottom: 20px;
-            border: 1px solid #2a364f;
+            border: 1px solid #1e293b;
         }
 
         .tab-btn {
             flex: 1;
-            padding: 12px;
+            padding: 11px 16px;
             border: none;
             background: transparent;
             color: #94a3b8;
             font-weight: 600;
-            font-size: 0.95rem;
+            font-size: 0.92rem;
             border-radius: 8px;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -71,38 +71,45 @@
         .tab-btn.active {
             background-color: #6366f1;
             color: #ffffff;
-            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
         }
 
-        /* Card Nội Dung Main */
+        /* Card Main */
         .card {
-            background-color: #151c2c;
+            background-color: #131b2e;
             border-radius: 16px;
             padding: 24px;
-            border: 1px solid #2a364f;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            border: 1px solid #1e293b;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
             margin-bottom: 20px;
         }
 
-        /* Area Kéo Thả File */
+        /* Dropzone */
         .drop-zone {
-            border: 2px dashed #3b82f6;
+            border: 2px dashed #313d52;
             border-radius: 12px;
-            padding: 30px 20px;
-            background-color: rgba(59, 130, 246, 0.03);
+            padding: 36px 20px;
+            background-color: rgba(255, 255, 255, 0.01);
             cursor: pointer;
-            transition: background 0.3s ease;
+            transition: all 0.2s ease;
             margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
         }
 
         .drop-zone:hover {
-            background-color: rgba(59, 130, 246, 0.08);
+            border-color: #6366f1;
+            background-color: rgba(99, 102, 241, 0.03);
         }
 
         .drop-zone-icon {
-            font-size: 2.2rem;
+            margin-bottom: 12px;
             color: #818cf8;
-            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .drop-zone-text {
@@ -110,7 +117,7 @@
             font-size: 0.9rem;
         }
 
-        /* Nhập Liệu Trong Tab Nhận */
+        /* Input */
         .input-group {
             margin-bottom: 16px;
             text-align: left;
@@ -126,8 +133,8 @@
         .input-field {
             width: 100%;
             padding: 12px 14px;
-            background-color: #0b0f19;
-            border: 1px solid #2a364f;
+            background-color: #0b1120;
+            border: 1px solid #1e293b;
             border-radius: 8px;
             color: #f1f5f9;
             font-size: 0.9rem;
@@ -139,16 +146,16 @@
             border-color: #6366f1;
         }
 
-        /* Nút Thực Thi Chính */
+        /* Nút chính */
         .btn-primary {
             width: 100%;
-            padding: 14px;
+            padding: 13px;
             background-color: #6366f1;
             color: white;
             border: none;
             border-radius: 10px;
             font-weight: 600;
-            font-size: 1rem;
+            font-size: 0.98rem;
             cursor: pointer;
             transition: background 0.2s ease;
             display: flex;
@@ -161,24 +168,24 @@
             background-color: #4f46e5;
         }
 
-        /* Khung Kết Quả Thông Báo */
+        /* Kết quả */
         .result-box {
             margin-top: 16px;
             padding: 14px;
-            background-color: #0b0f19;
+            background-color: #0b1120;
             border-radius: 8px;
-            border: 1px solid #2a364f;
+            border: 1px solid #1e293b;
             text-align: left;
             font-size: 0.85rem;
             word-break: break-all;
         }
 
-        /* Khung Lịch Sử */
+        /* Lịch sử */
         .history-card {
-            background-color: #151c2c;
+            background-color: #131b2e;
             border-radius: 16px;
             padding: 20px;
-            border: 1px solid #2a364f;
+            border: 1px solid #1e293b;
             text-align: left;
         }
 
@@ -199,22 +206,24 @@
         }
 
         .btn-refresh {
-            background-color: #1e293b;
+            background-color: rgba(255, 255, 255, 0.05);
             color: #cbd5e1;
-            border: 1px solid #334155;
+            border: 1px solid #2a364f;
             padding: 6px 12px;
             border-radius: 6px;
             font-size: 0.8rem;
             cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
             transition: all 0.2s ease;
         }
 
         .btn-refresh:hover {
-            background-color: #334155;
+            background-color: #1e293b;
             color: #fff;
         }
 
-        /* Utilities */
         .hidden {
             display: none !important;
         }
@@ -229,28 +238,33 @@
             <p>Chia sẻ tệp tin mã hóa bảo mật E2EE</p>
         </div>
 
-        <!-- Thanh Chuyển Tab -->
+        <!-- Tabs -->
         <div class="tab-container">
             <button class="tab-btn active" onclick="switchTab('upload')">
-                <span>📤 Gửi Tệp</span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                <span>Gửi Tệp</span>
             </button>
             <button class="tab-btn" onclick="switchTab('download')">
-                <span>📥 Nhận Tệp</span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                <span>Nhận Tệp</span>
             </button>
         </div>
 
-        <!-- ================= TAB GỬI TỆP ================= -->
+        <!-- TAB GỬI TỆP -->
         <div id="uploadSection">
             <div class="card">
                 <div class="drop-zone" onclick="document.getElementById('fileInput').click()">
                     <input type="file" id="fileInput" style="display: none;" onchange="handleFileSelect(this.files[0])">
-                    <div class="drop-zone-icon">📁</div>
+                    <div class="drop-zone-icon">
+                        <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="#818cf8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 12 15 15"/></svg>
+                    </div>
                     <div class="drop-zone-text">Nhấn để chọn tệp hoặc kéo thả vào đây</div>
                     <div id="fileNameDisplay" style="margin-top: 10px; color: #818cf8; font-weight: 600; font-size: 0.88rem;"></div>
                 </div>
 
                 <button class="btn-primary" onclick="encryptAndUpload()">
-                    🔒 Mã Hóa & Gửi Tệp
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    <span>Mã Hóa & Gửi Tệp</span>
                 </button>
 
                 <div id="uploadResult" class="result-box hidden"></div>
@@ -260,15 +274,19 @@
             <div class="history-card">
                 <div class="history-header">
                     <div class="history-title">
-                        <span>🔄</span> Lịch Sử Đã Gửi (Trên Máy Này)
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#818cf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>
+                        <span>Lịch Sử Đã Gửi (Trên Máy Này)</span>
                     </div>
-                    <button class="btn-refresh" onclick="loadLocalHistory(true)">🔄 Làm mới</button>
+                    <button class="btn-refresh" onclick="loadLocalHistory(true)">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6"/><path d="M21.34 15.57a10 10 0 1 1-.57-8.38l2.37-2.37"/></svg>
+                        <span>Làm mới</span>
+                    </button>
                 </div>
                 <div id="historyTableContainer"></div>
             </div>
         </div>
 
-        <!-- ================= TAB NHẬN TỆP ================= -->
+        <!-- TAB NHẬN TỆP -->
         <div id="downloadSection" class="hidden">
             <div class="card">
                 <div class="input-group">
@@ -282,7 +300,8 @@
                 </div>
 
                 <button class="btn-primary" onclick="downloadAndDecrypt()">
-                    🔓 Tải Về & Giải Mã
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
+                    <span>Tải Về & Giải Mã</span>
                 </button>
 
                 <div id="downloadResult" class="result-box hidden"></div>
@@ -292,16 +311,19 @@
             <div class="history-card">
                 <div class="history-header">
                     <div class="history-title">
-                        <span>🔄</span> Lịch Sử Đã Nhận (Trên Máy Này)
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#818cf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>
+                        <span>Lịch Sử Đã Nhận (Trên Máy Này)</span>
                     </div>
-                    <button class="btn-refresh" onclick="loadReceiveHistory(true)">🔄 Làm mới</button>
+                    <button class="btn-refresh" onclick="loadReceiveHistory(true)">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6"/><path d="M21.34 15.57a10 10 0 1 1-.57-8.38l2.37-2.37"/></svg>
+                        <span>Làm mới</span>
+                    </button>
                 </div>
                 <div id="receiveHistoryTableContainer"></div>
             </div>
         </div>
     </div>
 
-    <!-- Tải File Logic JavaScript -->
     <script src="app.js"></script>
 </body>
 </html>
