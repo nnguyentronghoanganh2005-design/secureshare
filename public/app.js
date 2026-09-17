@@ -10,7 +10,9 @@ function copyToClipboard(text, label) {
     });
 }
 
-// Tải lịch sử riêng từ LocalStorage của máy người gửi
+// ------------------- QUẢN LÝ LỊCH SỬ GỬI TỆP -------------------
+
+// Tải lịch sử gửi tệp từ LocalStorage của máy người gửi
 function loadLocalHistory() {
     const container = document.getElementById('historyTableContainer');
     if (!container) return;
@@ -72,17 +74,93 @@ function saveToLocalHistory(fileId, secretKey) {
     loadLocalHistory();
 }
 
+// ------------------- QUẢN LÝ LỊCH SỬ NHẬN TỆP -------------------
+
+// Tải lịch sử nhận tệp từ LocalStorage của máy người nhận
+function loadReceiveHistory() {
+    const container = document.getElementById('receiveHistoryTableContainer');
+    if (!container) return;
+
+    const history = JSON.parse(localStorage.getItem('my_received_files') || '[]');
+
+    if (history.length === 0) {
+        container.innerHTML = '<p style="color: #94a3b8; font-size: 0.85rem;">Bạn chưa nhận tệp nào trên thiết bị này.</p>';
+        return;
+    }
+
+    let html = `
+        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.8rem; color: #cbd5e1; table-layout: fixed;">
+            <thead>
+                <tr style="border-bottom: 1px solid #334155; color: #94a3b8;">
+                    <th style="padding: 8px 4px; width: 38%;">Mã Tệp (File ID)</th>
+                    <th style="padding: 8px 4px; width: 38%;">Khóa Giải Mã (Secret Key)</th>
+                    <th style="padding: 8px 4px; width: 24%;">Thời Gian</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+
+    history.forEach(item => {
+        const shortFileId = item.fileId ? (item.fileId.length > 10 ? item.fileId.substring(0, 8) + '...' : item.fileId) : '';
+        const shortKey = item.secretKey ? (item.secretKey.length > 10 ? item.secretKey.substring(0, 8) + '...' : item.secretKey) : '';
+
+        html += `
+            <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
+                <td style="padding: 8px 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="Bấm để copy Mã tệp đầy đủ: ${item.fileId}">
+                    <code style="color: #818cf8; cursor: pointer; background: rgba(129, 140, 248, 0.1); padding: 2px 6px; border-radius: 4px;" onclick="copyToClipboard('${item.fileId}', 'Mã Tệp')">
+                        ${shortFileId} 📋
+                    </code>
+                </td>
+                <td style="padding: 8px 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="Bấm để copy Khóa giải mã đầy đủ: ${item.secretKey}">
+                    <code style="color: #f43f5e; cursor: pointer; background: rgba(244, 63, 94, 0.1); padding: 2px 6px; border-radius: 4px;" onclick="copyToClipboard('${item.secretKey}', 'Khóa Giải Mã')">
+                        ${shortKey} 📋
+                    </code>
+                </td>
+                <td style="padding: 8px 4px; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.date}</td>
+            </tr>
+        `;
+    });
+
+    html += '</tbody></table>';
+    container.innerHTML = html;
+}
+
+// Lưu lịch sử nhận tệp vào LocalStorage
+function saveToReceiveHistory(fileId, secretKey) {
+    let history = JSON.parse(localStorage.getItem('my_received_files') || '[]');
+    const newItem = {
+        fileId: fileId,
+        secretKey: secretKey,
+        date: new Date().toLocaleString('vi-VN')
+    };
+    
+    // Loại bỏ nếu mã tệp này đã có trong danh sách để đẩy lên đầu
+    history = history.filter(item => item.fileId !== fileId);
+    history.unshift(newItem);
+    
+    localStorage.setItem('my_received_files', JSON.stringify(history));
+    loadReceiveHistory();
+}
+
+// ------------------- CHUYỂN TAB & SỰ KIỆN GIAO DIỆN -------------------
+
 function switchTab(tabName) {
-    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-    document.getElementById('uploadTab').classList.add('hidden');
-    document.getElementById('downloadTab').classList.add('hidden');
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    const uploadSection = document.getElementById('uploadSection') || document.getElementById('uploadTab');
+    const downloadSection = document.getElementById('downloadSection') || document.getElementById('downloadTab');
+
+    tabButtons.forEach(btn => btn.classList.remove('active'));
 
     if (tabName === 'upload') {
-        document.querySelectorAll('.tab-btn')[0].classList.add('active');
-        document.getElementById('uploadTab').classList.remove('hidden');
+        if (tabButtons[0]) tabButtons[0].classList.add('active');
+        if (uploadSection) uploadSection.classList.remove('hidden');
+        if (downloadSection) downloadSection.classList.add('hidden');
+        loadLocalHistory();
     } else {
-        document.querySelectorAll('.tab-btn')[1].classList.add('active');
-        document.getElementById('downloadTab').classList.remove('hidden');
+        if (tabButtons[1]) tabButtons[1].classList.add('active');
+        if (uploadSection) uploadSection.classList.add('hidden');
+        if (downloadSection) downloadSection.classList.remove('hidden');
+        loadReceiveHistory();
     }
 }
 
@@ -195,9 +273,16 @@ async function downloadAndDecrypt() {
         a.click();
 
         resBox.innerHTML = `<span style="color:#4ade80;">✅ Tải về thành công: <strong>${fileName}</strong></span>`;
+
+        // Tự động lưu lịch sử nhận tệp
+        saveToReceiveHistory(fileId, secretKeyHex);
     } catch (err) {
         resBox.innerHTML = `<span style="color:#ef4444;">❌ Giải mã thất bại! Kiểm tra lại thông tin.</span>`;
     }
 }
 
-document.addEventListener('DOMContentLoaded', loadLocalHistory);
+// Khởi tạo tải dữ liệu khi trang web được tải xong
+document.addEventListener('DOMContentLoaded', () => {
+    loadLocalHistory();
+    loadReceiveHistory();
+});
