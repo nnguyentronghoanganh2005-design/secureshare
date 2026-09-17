@@ -2,283 +2,306 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SecureShare - Mã Hóa & Chia Sẻ Tài Liệu</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecureShare - Mã Hóa & Chia Sẻ Tệp Báo Mật E2EE</title>
     <style>
-        :root {
-            --bg-color: #0f172a;
-            --card-bg: rgba(30, 41, 59, 0.85);
-            --border-color: #334155;
-            --primary-color: #6366f1;
-            --primary-hover: #4f46e5;
-            --text-color: #f8fafc;
-            --text-muted: #94a3b8;
-        }
-
-        * { 
-            box-sizing: border-box; 
-            margin: 0; 
-            padding: 0; 
-            font-family: 'Inter', sans-serif; 
-            -webkit-tap-highlight-color: transparent; 
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
         body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            min-height: 100vh;
+            background-color: #0b0f19;
+            color: #f1f5f9;
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 16px;
+            min-height: 100vh;
+            padding: 20px;
         }
 
-        .container { width: 100%; max-width: 580px; margin: 0 auto; }
+        /* Container được mở rộng lên 720px để cột thời gian không bị che khuất */
+        .main-container {
+            width: 100%;
+            max-width: 720px;
+            text-align: center;
+        }
 
-        .header { text-align: center; margin-bottom: 20px; }
         .header h1 {
-            font-size: 1.8rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, #818cf8, #c084fc);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            font-size: 2.2rem;
+            color: #818cf8;
+            margin-bottom: 6px;
         }
-        .header p { color: var(--text-muted); font-size: 0.85rem; margin-top: 6px; }
 
-        .tabs {
+        .header p {
+            color: #94a3b8;
+            font-size: 0.95rem;
+            margin-bottom: 24px;
+        }
+
+        /* Khung Tab Chuyển Đổi */
+        .tab-container {
             display: flex;
-            background: var(--card-bg);
-            padding: 4px;
+            background-color: #151c2c;
             border-radius: 12px;
-            border: 1px solid var(--border-color);
-            margin-bottom: 16px;
-            gap: 4px;
+            padding: 5px;
+            margin-bottom: 20px;
+            border: 1px solid #2a364f;
         }
 
         .tab-btn {
             flex: 1;
-            padding: 12px 8px;
-            background: transparent;
-            border: none;
-            color: var(--text-muted);
-            font-weight: 600;
-            font-size: 0.9rem;
-            cursor: pointer;
-            border-radius: 8px;
-            transition: all 0.2s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-        }
-
-        .tab-btn.active {
-            background: var(--primary-color);
-            color: white;
-            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
-        }
-
-        .card {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            padding: 20px;
-            backdrop-filter: blur(10px);
-            margin-bottom: 20px;
-        }
-
-        .drop-zone {
-            border: 2px dashed var(--border-color);
-            border-radius: 12px;
-            padding: 28px 16px;
-            text-align: center;
-            cursor: pointer;
-            transition: border-color 0.2s;
-        }
-
-        .drop-zone:hover { border-color: var(--primary-color); }
-
-        .input-group { margin-bottom: 14px; }
-        .input-group label { display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 6px; font-weight: 500; }
-        .input-group input {
-            width: 100%;
             padding: 12px;
-            background: rgba(15, 23, 42, 0.6);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            color: white;
-            font-size: 0.9rem;
-            outline: none;
-        }
-
-        .btn {
-            width: 100%;
-            padding: 14px;
-            background: var(--primary-color);
-            color: white;
             border: none;
-            border-radius: 8px;
+            background: transparent;
+            color: #94a3b8;
             font-weight: 600;
             font-size: 0.95rem;
+            border-radius: 8px;
             cursor: pointer;
+            transition: all 0.3s ease;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 8px;
-            transition: background 0.2s;
         }
 
-        .btn:hover { background: var(--primary-hover); }
+        .tab-btn.active {
+            background-color: #6366f1;
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
 
+        /* Card Nội Dung Main */
+        .card {
+            background-color: #151c2c;
+            border-radius: 16px;
+            padding: 24px;
+            border: 1px solid #2a364f;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            margin-bottom: 20px;
+        }
+
+        /* Area Kéo Thả File */
+        .drop-zone {
+            border: 2px dashed #3b82f6;
+            border-radius: 12px;
+            padding: 30px 20px;
+            background-color: rgba(59, 130, 246, 0.03);
+            cursor: pointer;
+            transition: background 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        .drop-zone:hover {
+            background-color: rgba(59, 130, 246, 0.08);
+        }
+
+        .drop-zone-icon {
+            font-size: 2.2rem;
+            color: #818cf8;
+            margin-bottom: 10px;
+        }
+
+        .drop-zone-text {
+            color: #cbd5e1;
+            font-size: 0.9rem;
+        }
+
+        /* Nhập Liệu Trong Tab Nhận */
+        .input-group {
+            margin-bottom: 16px;
+            text-align: left;
+        }
+
+        .input-group label {
+            display: block;
+            color: #94a3b8;
+            font-size: 0.85rem;
+            margin-bottom: 6px;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 12px 14px;
+            background-color: #0b0f19;
+            border: 1px solid #2a364f;
+            border-radius: 8px;
+            color: #f1f5f9;
+            font-size: 0.9rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .input-field:focus {
+            border-color: #6366f1;
+        }
+
+        /* Nút Thực Thi Chính */
+        .btn-primary {
+            width: 100%;
+            padding: 14px;
+            background-color: #6366f1;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary:hover {
+            background-color: #4f46e5;
+        }
+
+        /* Khung Kết Quả Thông Báo */
         .result-box {
             margin-top: 16px;
             padding: 14px;
-            background: rgba(15, 23, 42, 0.8);
-            border: 1px solid var(--border-color);
+            background-color: #0b0f19;
             border-radius: 8px;
-            word-break: break-all;
-            font-size: 0.85rem;
-        }
-
-        .hidden { display: none !important; }
-
-        .history-table, table {
-            width: 100%;
-            table-layout: fixed;
-            border-collapse: collapse;
-        }
-
-        .history-table th, .history-table td {
-            padding: 12px 8px;
+            border: 1px solid #2a364f;
             text-align: left;
-            white-space: nowrap;
-            overflow: hidden;
+            font-size: 0.85rem;
+            word-break: break-all;
         }
 
-        .code-badge {
-            font-family: monospace;
-            background: rgba(255, 255, 255, 0.08);
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 0.85em;
+        /* Khung Lịch Sử */
+        .history-card {
+            background-color: #151c2c;
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid #2a364f;
+            text-align: left;
         }
 
-        .key-badge {
-            color: #ff79c6;
-            background: rgba(255, 121, 198, 0.1);
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
         }
 
-        .btn-copy {
-            background: transparent;
-            border: none;
+        .history-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #f1f5f9;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-refresh {
+            background-color: #1e293b;
+            color: #cbd5e1;
+            border: 1px solid #334155;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.8rem;
             cursor: pointer;
-            font-size: 0.9em;
-            margin-left: 4px;
-            padding: 2px 4px;
-            transition: transform 0.1s;
+            transition: all 0.2s ease;
         }
 
-        .btn-copy:hover { transform: scale(1.25); }
+        .btn-refresh:hover {
+            background-color: #334155;
+            color: #fff;
+        }
 
-        @media (max-width: 480px) {
-            body { padding: 12px; }
-            .card { padding: 16px; }
-            .header h1 { font-size: 1.5rem; }
-            .drop-zone { padding: 20px 10px; }
+        /* Utilities */
+        .hidden {
+            display: none !important;
         }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="header">
-        <h1>SecureShare</h1>
-        <p>Chia sẻ tệp tin mã hóa bảo mật E2EE</p>
-    </div>
+    <div class="main-container">
+        <!-- Header -->
+        <div class="header">
+            <h1>SecureShare</h1>
+            <p>Chia sẻ tệp tin mã hóa bảo mật E2EE</p>
+        </div>
 
-    <div class="tabs">
-        <button id="btnTabUpload" class="tab-btn active" onclick="switchTab('upload')">
-            <i data-lucide="upload"></i> Gửi Tệp
-        </button>
-        <button id="btnTabDownload" class="tab-btn" onclick="switchTab('download')">
-            <i data-lucide="download"></i> Nhận Tệp
-        </button>
-    </div>
-
-    <!-- KHUNG GỬI TỆP -->
-    <div id="uploadSection">
-        <div class="card">
-            <div class="drop-zone" onclick="document.getElementById('fileInput').click()">
-                <i data-lucide="file-up" style="width:36px; height:36px; color:var(--primary-color); margin-bottom:8px;"></i>
-                <p style="font-size: 0.9rem;">Nhấn để chọn tệp hoặc kéo thả vào đây</p>
-                <input type="file" id="fileInput" style="display: none" onchange="handleFileSelect(this.files[0])">
-                <div id="fileNameDisplay" style="margin-top: 10px; font-weight: 600; color: #818cf8; font-size: 0.85rem;"></div>
-            </div>
-            <button class="btn" style="margin-top: 16px;" onclick="encryptAndUpload()">
-                <i data-lucide="lock"></i> Mã Hóa & Gửi Tệp
+        <!-- Thanh Chuyển Tab -->
+        <div class="tab-container">
+            <button class="tab-btn active" onclick="switchTab('upload')">
+                <span>📤 Gửi Tệp</span>
             </button>
-            <div id="uploadResult" class="result-box hidden"></div>
-        </div>
-
-        <!-- Lịch Sử Đã Gửi -->
-        <div class="card">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                <h3 style="font-size: 0.95rem; color: #f8fafc; display: flex; align-items: center; gap: 6px;">
-                    <i data-lucide="history" style="width: 18px; color: var(--primary-color);"></i> Lịch Sử Đã Gửi (Trên Máy Này)
-                </h3>
-                <button onclick="loadLocalHistory()" style="background: #334155; border: none; color: #cbd5e1; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; display: flex; align-items: center; gap: 4px;">
-                    <i data-lucide="refresh-cw" style="width: 14px;"></i> Làm mới
-                </button>
-            </div>
-            <div id="historyTableContainer" style="overflow-x: auto;">
-                <p style="color: #94a3b8; font-size: 0.85rem;">Chưa có dữ liệu.</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- KHUNG NHẬN TỆP -->
-    <div id="downloadSection" class="hidden">
-        <div class="card">
-            <div class="input-group">
-                <label>Mã Tệp (File ID)</label>
-                <input type="text" id="fileIdInput" placeholder="Nhập ID tệp cần tải">
-            </div>
-            <div class="input-group">
-                <label>Khóa Giải Mã (Secret Key)</label>
-                <input type="text" id="keyInput" placeholder="Nhập khóa giải mã">
-            </div>
-            <button class="btn" onclick="downloadAndDecrypt()">
-                <i data-lucide="key"></i> Giải Mã & Tải Về
+            <button class="tab-btn" onclick="switchTab('download')">
+                <span>📥 Nhận Tệp</span>
             </button>
-            <div id="downloadResult" class="result-box hidden"></div>
         </div>
 
-        <!-- Lịch Sử Đã Nhận -->
-        <div class="card">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                <h3 style="font-size: 0.95rem; color: #f8fafc; display: flex; align-items: center; gap: 6px;">
-                    <i data-lucide="download-cloud" style="width: 18px; color: var(--primary-color);"></i> Lịch Sử Đã Nhận (Trên Máy Này)
-                </h3>
-                <button onclick="loadReceiveHistory()" style="background: #334155; border: none; color: #cbd5e1; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; display: flex; align-items: center; gap: 4px;">
-                    <i data-lucide="refresh-cw" style="width: 14px;"></i> Làm mới
+        <!-- ================= TAB GỬI TỆP ================= -->
+        <div id="uploadSection">
+            <div class="card">
+                <div class="drop-zone" onclick="document.getElementById('fileInput').click()">
+                    <input type="file" id="fileInput" style="display: none;" onchange="handleFileSelect(this.files[0])">
+                    <div class="drop-zone-icon">📁</div>
+                    <div class="drop-zone-text">Nhấn để chọn tệp hoặc kéo thả vào đây</div>
+                    <div id="fileNameDisplay" style="margin-top: 10px; color: #818cf8; font-weight: 600; font-size: 0.88rem;"></div>
+                </div>
+
+                <button class="btn-primary" onclick="encryptAndUpload()">
+                    🔒 Mã Hóa & Gửi Tệp
                 </button>
+
+                <div id="uploadResult" class="result-box hidden"></div>
             </div>
-            <div id="receiveHistoryTableContainer" style="overflow-x: auto;">
-                <p style="color: #94a3b8; font-size: 0.85rem;">Chưa có dữ liệu.</p>
+
+            <!-- Lịch Sử Gửi -->
+            <div class="history-card">
+                <div class="history-header">
+                    <div class="history-title">
+                        <span>🔄</span> Lịch Sử Đã Gửi (Trên Máy Này)
+                    </div>
+                    <button class="btn-refresh" onclick="loadLocalHistory(true)">🔄 Làm mới</button>
+                </div>
+                <div id="historyTableContainer"></div>
+            </div>
+        </div>
+
+        <!-- ================= TAB NHẬN TỆP ================= -->
+        <div id="downloadSection" class="hidden">
+            <div class="card">
+                <div class="input-group">
+                    <label for="fileIdInput">Mã Tệp (File ID)</label>
+                    <input type="text" id="fileIdInput" class="input-field" placeholder="Nhập Mã Tệp...">
+                </div>
+
+                <div class="input-group">
+                    <label for="keyInput">Khóa Giải Mã (Secret Key)</label>
+                    <input type="text" id="keyInput" class="input-field" placeholder="Nhập Khóa Giải Mã...">
+                </div>
+
+                <button class="btn-primary" onclick="downloadAndDecrypt()">
+                    🔓 Tải Về & Giải Mã
+                </button>
+
+                <div id="downloadResult" class="result-box hidden"></div>
+            </div>
+
+            <!-- Lịch Sử Nhận -->
+            <div class="history-card">
+                <div class="history-header">
+                    <div class="history-title">
+                        <span>🔄</span> Lịch Sử Đã Nhận (Trên Máy Này)
+                    </div>
+                    <button class="btn-refresh" onclick="loadReceiveHistory(true)">🔄 Làm mới</button>
+                </div>
+                <div id="receiveHistoryTableContainer"></div>
             </div>
         </div>
     </div>
-</div>
 
-<script src="app.js"></script>
-<script>
-    lucide.createIcons();
-    document.addEventListener("DOMContentLoaded", () => {
-        if (typeof loadLocalHistory === 'function') loadLocalHistory();
-        if (typeof loadReceiveHistory === 'function') loadReceiveHistory();
-    });
-</script>
+    <!-- Tải File Logic JavaScript -->
+    <script src="app.js"></script>
 </body>
 </html>
