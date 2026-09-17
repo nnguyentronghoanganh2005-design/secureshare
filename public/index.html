@@ -144,7 +144,6 @@
 
         .hidden { display: none !important; }
 
-        /* Cố định khung bảng không bao giờ bị xô lệch */
         .history-table, table {
             width: 100%;
             table-layout: fixed;
@@ -158,7 +157,6 @@
             overflow: hidden;
         }
 
-        /* Kiểu dáng Badge hiển thị mã */
         .code-badge {
             font-family: monospace;
             background: rgba(255, 255, 255, 0.08);
@@ -172,7 +170,6 @@
             background: rgba(255, 121, 198, 0.1);
         }
 
-        /* Nút Copy gọn nhẹ */
         .btn-copy {
             background: transparent;
             border: none;
@@ -183,9 +180,7 @@
             transition: transform 0.1s;
         }
 
-        .btn-copy:hover {
-            transform: scale(1.25);
-        }
+        .btn-copy:hover { transform: scale(1.25); }
 
         @media (max-width: 480px) {
             body { padding: 12px; }
@@ -204,59 +199,86 @@
     </div>
 
     <div class="tabs">
-        <button class="tab-btn active" onclick="switchTab('upload')">
+        <button id="btnTabUpload" class="tab-btn active" onclick="switchTab('upload')">
             <i data-lucide="upload"></i> Gửi Tệp
         </button>
-        <button class="tab-btn" onclick="switchTab('download')">
+        <button id="btnTabDownload" class="tab-btn" onclick="switchTab('download')">
             <i data-lucide="download"></i> Nhận Tệp
         </button>
     </div>
 
-    <div id="uploadTab" class="card">
-        <div class="drop-zone" onclick="document.getElementById('fileInput').click()">
-            <i data-lucide="file-up" style="width:36px; height:36px; color:var(--primary-color); margin-bottom:8px;"></i>
-            <p style="font-size: 0.9rem;">Nhấn để chọn tệp hoặc kéo thả vào đây</p>
-            <input type="file" id="fileInput" style="display: none" onchange="handleFileSelect(this.files[0])">
-            <div id="fileNameDisplay" style="margin-top: 10px; font-weight: 600; color: #818cf8; font-size: 0.85rem;"></div>
-        </div>
-        <button class="btn" style="margin-top: 16px;" onclick="encryptAndUpload()">
-            <i data-lucide="lock"></i> Mã Hóa & Gửi Tệp
-        </button>
-        <div id="uploadResult" class="result-box hidden"></div>
-    </div>
-
-    <div id="downloadTab" class="card hidden">
-        <div class="input-group">
-            <label>Mã Tệp (File ID)</label>
-            <input type="text" id="fileIdInput" placeholder="Nhập ID tệp cần tải">
-        </div>
-        <div class="input-group">
-            <label>Khóa Giải Mã (Secret Key)</label>
-            <input type="text" id="keyInput" placeholder="Nhập khóa giải mã">
-        </div>
-        <button class="btn" onclick="downloadAndDecrypt()">
-            <i data-lucide="key"></i> Giải Mã & Tải Về
-        </button>
-        <div id="downloadResult" class="result-box hidden"></div>
-    </div>
-
-    <!-- Khung Lịch Sử Riêng Trên Máy Này -->
-    <div class="card">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-            <h3 style="font-size: 0.95rem; color: #f8fafc; display: flex; align-items: center; gap: 6px;">
-                <i data-lucide="history" style="width: 18px; color: var(--primary-color);"></i> Lịch Sử Đã Gửi (Trên Máy Này)
-            </h3>
-            <button onclick="loadLocalHistory()" style="background: #334155; border: none; color: #cbd5e1; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; display: flex; align-items: center; gap: 4px;">
-                <i data-lucide="refresh-cw" style="width: 14px;"></i> Làm mới
+    <!-- KHUNG GỬI TỆP -->
+    <div id="uploadSection">
+        <div class="card">
+            <div class="drop-zone" onclick="document.getElementById('fileInput').click()">
+                <i data-lucide="file-up" style="width:36px; height:36px; color:var(--primary-color); margin-bottom:8px;"></i>
+                <p style="font-size: 0.9rem;">Nhấn để chọn tệp hoặc kéo thả vào đây</p>
+                <input type="file" id="fileInput" style="display: none" onchange="handleFileSelect(this.files[0])">
+                <div id="fileNameDisplay" style="margin-top: 10px; font-weight: 600; color: #818cf8; font-size: 0.85rem;"></div>
+            </div>
+            <button class="btn" style="margin-top: 16px;" onclick="encryptAndUpload()">
+                <i data-lucide="lock"></i> Mã Hóa & Gửi Tệp
             </button>
+            <div id="uploadResult" class="result-box hidden"></div>
         </div>
-        <div id="historyTableContainer" style="overflow-x: auto;">
-            <p style="color: #94a3b8; font-size: 0.85rem;">Chưa có dữ liệu.</p>
+
+        <!-- Lịch Sử Đã Gửi -->
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <h3 style="font-size: 0.95rem; color: #f8fafc; display: flex; align-items: center; gap: 6px;">
+                    <i data-lucide="history" style="width: 18px; color: var(--primary-color);"></i> Lịch Sử Đã Gửi (Trên Máy Này)
+                </h3>
+                <button onclick="loadLocalHistory()" style="background: #334155; border: none; color: #cbd5e1; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; display: flex; align-items: center; gap: 4px;">
+                    <i data-lucide="refresh-cw" style="width: 14px;"></i> Làm mới
+                </button>
+            </div>
+            <div id="historyTableContainer" style="overflow-x: auto;">
+                <p style="color: #94a3b8; font-size: 0.85rem;">Chưa có dữ liệu.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- KHUNG NHẬN TỆP -->
+    <div id="downloadSection" class="hidden">
+        <div class="card">
+            <div class="input-group">
+                <label>Mã Tệp (File ID)</label>
+                <input type="text" id="fileIdInput" placeholder="Nhập ID tệp cần tải">
+            </div>
+            <div class="input-group">
+                <label>Khóa Giải Mã (Secret Key)</label>
+                <input type="text" id="keyInput" placeholder="Nhập khóa giải mã">
+            </div>
+            <button class="btn" onclick="downloadAndDecrypt()">
+                <i data-lucide="key"></i> Giải Mã & Tải Về
+            </button>
+            <div id="downloadResult" class="result-box hidden"></div>
+        </div>
+
+        <!-- Lịch Sử Đã Nhận -->
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <h3 style="font-size: 0.95rem; color: #f8fafc; display: flex; align-items: center; gap: 6px;">
+                    <i data-lucide="download-cloud" style="width: 18px; color: var(--primary-color);"></i> Lịch Sử Đã Nhận (Trên Máy Này)
+                </h3>
+                <button onclick="loadReceiveHistory()" style="background: #334155; border: none; color: #cbd5e1; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; display: flex; align-items: center; gap: 4px;">
+                    <i data-lucide="refresh-cw" style="width: 14px;"></i> Làm mới
+                </button>
+            </div>
+            <div id="receiveHistoryTableContainer" style="overflow-x: auto;">
+                <p style="color: #94a3b8; font-size: 0.85rem;">Chưa có dữ liệu.</p>
+            </div>
         </div>
     </div>
 </div>
 
 <script src="app.js"></script>
-<script>lucide.createIcons();</script>
+<script>
+    lucide.createIcons();
+    document.addEventListener("DOMContentLoaded", () => {
+        if (typeof loadLocalHistory === 'function') loadLocalHistory();
+        if (typeof loadReceiveHistory === 'function') loadReceiveHistory();
+    });
+</script>
 </body>
 </html>
