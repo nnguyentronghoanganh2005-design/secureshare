@@ -1,8 +1,9 @@
+// Global State & Constants
 let selectedFiles = [];
 let pendingModalAction = null;
 
-// Giới hạn dung lượng upload
 const MAX_FILE_SIZE_MB = 100; 
+const EXPIRE_MS = 24 * 60 * 60 * 1000; // Mốc thời gian 24 giờ (ms)
 
 document.addEventListener('DOMContentLoaded', () => {
     loadLocalHistory();
@@ -10,7 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupDragAndDrop();
 });
 
-// Custom Modal Popup Window
+// Custom Modal Dialog Popup
 function showModal(title, message, isConfirm = false, onConfirm = null) {
     const modal = document.getElementById('customModal');
     const modalTitle = document.getElementById('modalTitle');
@@ -45,7 +46,7 @@ function closeModal() {
     pendingModalAction = null;
 }
 
-// Copy vào clipboard
+// Copy vào bộ nhớ tạm (Clipboard)
 function copyToClipboard(text, element) {
     navigator.clipboard.writeText(text).then(() => {
         const originalOpacity = element.style.opacity;
@@ -78,7 +79,7 @@ function switchTab(tabName) {
     }
 }
 
-// Drag & Drop
+// Drag & Drop Handling
 function setupDragAndDrop() {
     const dropZone = document.getElementById('dropZone');
 
@@ -110,6 +111,7 @@ function handleFileSelect(files) {
     }
 }
 
+// Helper ArrayBuffer Conversion
 function bufferToHex(buffer) {
     return Array.from(new Uint8Array(buffer))
         .map(b => b.toString(16).padStart(2, '0'))
@@ -124,7 +126,7 @@ function hexToBuffer(hexString) {
     return bytes;
 }
 
-// Mã hóa và Tải lên
+// 1. Mã hóa và Tải tệp lên
 async function encryptAndUpload() {
     const resultBox = document.getElementById('uploadResult');
     const btnEncrypt = document.getElementById('btnEncrypt');
@@ -204,11 +206,12 @@ async function encryptAndUpload() {
         const data = await response.json();
         const fileId = data.fileId;
 
+        // Lưu vào LocalStorage với Unix timestamp chuẩn milliseconds
         saveToUploadHistory(fileId, secretKeyHex, fileName);
 
         // Khung hiển thị kết quả chuẩn 100% giống image_aa9ff3.png
         resultBox.innerHTML = `
-            <div style="color: #22c55e; font-weight: 600; margin-bottom: 12px; font-size: 0.95rem;">Tải lên & Mã hóa thành công!</div>
+            <div style="color: #4ade80; font-weight: 600; margin-bottom: 12px; font-size: 0.95rem;">Tải lên & Mã hóa thành công!</div>
             
             <div style="margin-bottom: 10px; display: flex; align-items: center; flex-wrap: wrap; gap: 8px;">
                 <b>Mã Tệp (File ID):</b> 
@@ -231,7 +234,7 @@ async function encryptAndUpload() {
             </div>
 
             <div style="color: #64748b; font-size: 0.8rem; border-top: 1px dashed #1e293b; padding-top: 8px; margin-top: 8px;">
-                ⏱️ <i>Lưu ý: Tệp của bạn hoạt động và tự động xóa khỏi hệ thống sau 24 giờ.</i>
+                ⏱️ <i>Lưu ý: Tệp của bạn tự động xóa khỏi hệ thống sau 24 giờ.</i>
             </div>
         `;
         resultBox.classList.remove('hidden');
@@ -247,7 +250,7 @@ async function encryptAndUpload() {
     }
 }
 
-// Tải về và Giải mã
+// 2. Tải về và Giải mã tệp
 async function downloadAndDecrypt() {
     const fileId = document.getElementById('fileIdInput').value.trim();
     const keyHex = document.getElementById('keyInput').value.trim();
@@ -304,7 +307,7 @@ async function downloadAndDecrypt() {
 
         saveToReceiveHistory(fileId, keyHex, fileName);
 
-        resultBox.innerHTML = `<div style="color: #22c55e; font-weight: 600;">Giải mã & Tải về thành công: <b>${fileName}</b></div>`;
+        resultBox.innerHTML = `<div style="color: #4ade80; font-weight: 600;">Giải mã & Tải về thành công: <b>${fileName}</b></div>`;
         resultBox.classList.remove('hidden');
 
     } catch (err) {
@@ -318,14 +321,14 @@ async function downloadAndDecrypt() {
     }
 }
 
-// --- Lịch Sử Gửi (Chuẩn theo image_aa4d63.png) ---
+// --- QUẢN LÝ LỊCH SỬ ĐÃ GỬI (Chuẩn giao diện image_aa4d63.png) ---
 function saveToUploadHistory(fileId, key, fileName) {
     let history = JSON.parse(localStorage.getItem('uploadHistory') || '[]');
     history.unshift({
         fileId: fileId,
         key: key,
         fileName: fileName,
-        timestamp: new Date().toLocaleTimeString('vi-VN') + ' ' + new Date().toLocaleDateString('vi-VN')
+        timestamp: Date.now() // Lưu timestamp dạng ms
     });
     localStorage.setItem('uploadHistory', JSON.stringify(history));
     loadLocalHistory();
@@ -337,9 +340,11 @@ function loadLocalHistory() {
 
     const history = JSON.parse(localStorage.getItem('uploadHistory') || '[]');
     if (history.length === 0) {
-        container.innerHTML = `<p style="color: #64748b; font-size: 0.85rem; text-align: center; padding: 10px 0;">Bạn chưa gửi tệp nào trên thiết bị này.</p>`;
+        container.innerHTML = `<p style="color: #64748b; font-size: 0.85rem; text-align: center; padding: 12px 0;">Bạn chưa gửi tệp nào trên thiết bị này.</p>`;
         return;
     }
+
+    const NOW = Date.now();
 
     let html = `
     <table style="width: 100%; font-size: 0.85rem; color: #f1f5f9; border-collapse: collapse;">
@@ -348,6 +353,7 @@ function loadLocalHistory() {
                 <th style="padding: 10px 8px;">Mã Tệp (File ID)</th>
                 <th style="padding: 10px 8px;">Khóa Giải Mã</th>
                 <th style="padding: 10px 8px;">Thời Gian</th>
+                <th style="padding: 10px 8px;">Trạng Thái</th>
                 <th style="padding: 10px 8px; text-align: center;">Xóa</th>
             </tr>
         </thead>
@@ -357,8 +363,24 @@ function loadLocalHistory() {
         const shortId = item.fileId ? item.fileId.substring(0, 8) + '...' : '';
         const shortKey = item.key ? item.key.substring(0, 8) + '...' : '';
 
+        // Kiểm tra trạng thái hết hạn 24h
+        const isExpired = item.timestamp ? (NOW - item.timestamp > EXPIRE_MS) : false;
+        const statusText = isExpired 
+            ? '<span style="color: #ef4444; font-weight: 500;">🔴 Đã hết hạn</span>' 
+            : '<span style="color: #4ade80; font-weight: 500;">🟢 Còn hạn</span>';
+        const rowOpacity = isExpired ? 'opacity: 0.5;' : '';
+
+        // Định dạng thời gian
+        let timeFormatted = 'N/A';
+        if (typeof item.timestamp === 'number') {
+            const dateObj = new Date(item.timestamp);
+            timeFormatted = dateObj.toLocaleTimeString('vi-VN') + ' ' + dateObj.toLocaleDateString('vi-VN');
+        } else if (item.timestamp) {
+            timeFormatted = item.timestamp;
+        }
+
         html += `
-        <tr style="border-bottom: 1px solid #1e293b;">
+        <tr style="border-bottom: 1px solid #1e293b; ${rowOpacity}">
             <td style="padding: 10px 8px;">
                 <div class="badge-copy badge-blue" onclick="copyToClipboard('${item.fileId}', this)" title="Bấm để sao chép Mã Tệp">
                     <span>${shortId}</span>
@@ -371,7 +393,8 @@ function loadLocalHistory() {
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                 </div>
             </td>
-            <td style="padding: 10px 8px; color: #94a3b8;">${item.timestamp}</td>
+            <td style="padding: 10px 8px; color: #94a3b8;">${timeFormatted}</td>
+            <td style="padding: 10px 8px;">${statusText}</td>
             <td style="padding: 10px 8px; text-align: center;">
                 <button class="btn-delete-item" onclick="deleteUploadHistoryItem(${index})" title="Xóa dòng này">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
@@ -384,18 +407,6 @@ function loadLocalHistory() {
     container.innerHTML = html;
 }
 
-function clearUploadHistory() {
-    showModal(
-        'Xác nhận xóa',
-        'Bạn có chắc chắn muốn xóa sạch toàn bộ lịch sử tệp đã gửi trên trình duyệt này không?',
-        true,
-        () => {
-            localStorage.removeItem('uploadHistory');
-            loadLocalHistory();
-        }
-    );
-}
-
 function deleteUploadHistoryItem(index) {
     let history = JSON.parse(localStorage.getItem('uploadHistory') || '[]');
     history.splice(index, 1);
@@ -403,14 +414,14 @@ function deleteUploadHistoryItem(index) {
     loadLocalHistory();
 }
 
-// --- Lịch Sử Nhận ---
+// --- QUẢN LÝ LỊCH SỬ ĐÃ NHẬN ---
 function saveToReceiveHistory(fileId, key, fileName) {
     let history = JSON.parse(localStorage.getItem('receiveHistory') || '[]');
     history.unshift({
         fileId: fileId,
         key: key,
         fileName: fileName,
-        timestamp: new Date().toLocaleTimeString('vi-VN') + ' ' + new Date().toLocaleDateString('vi-VN')
+        timestamp: Date.now()
     });
     localStorage.setItem('receiveHistory', JSON.stringify(history));
     loadReceiveHistory();
@@ -422,9 +433,11 @@ function loadReceiveHistory() {
 
     const history = JSON.parse(localStorage.getItem('receiveHistory') || '[]');
     if (history.length === 0) {
-        container.innerHTML = `<p style="color: #64748b; font-size: 0.85rem; text-align: center; padding: 10px 0;">Bạn chưa nhận tệp nào trên thiết bị này.</p>`;
+        container.innerHTML = `<p style="color: #64748b; font-size: 0.85rem; text-align: center; padding: 12px 0;">Bạn chưa nhận tệp nào trên thiết bị này.</p>`;
         return;
     }
+
+    const NOW = Date.now();
 
     let html = `
     <table style="width: 100%; font-size: 0.85rem; color: #f1f5f9; border-collapse: collapse;">
@@ -433,6 +446,7 @@ function loadReceiveHistory() {
                 <th style="padding: 10px 8px;">Mã Tệp (File ID)</th>
                 <th style="padding: 10px 8px;">Khóa Giải Mã</th>
                 <th style="padding: 10px 8px;">Thời Gian</th>
+                <th style="padding: 10px 8px;">Trạng Thái</th>
                 <th style="padding: 10px 8px; text-align: center;">Xóa</th>
             </tr>
         </thead>
@@ -442,8 +456,23 @@ function loadReceiveHistory() {
         const shortId = item.fileId ? item.fileId.substring(0, 8) + '...' : '';
         const shortKey = item.key ? item.key.substring(0, 8) + '...' : '';
 
+        // Kiểm tra trạng thái hết hạn 24h
+        const isExpired = item.timestamp ? (NOW - item.timestamp > EXPIRE_MS) : false;
+        const statusText = isExpired 
+            ? '<span style="color: #ef4444; font-weight: 500;">🔴 Đã hết hạn</span>' 
+            : '<span style="color: #4ade80; font-weight: 500;">🟢 Còn hạn</span>';
+        const rowOpacity = isExpired ? 'opacity: 0.5;' : '';
+
+        let timeFormatted = 'N/A';
+        if (typeof item.timestamp === 'number') {
+            const dateObj = new Date(item.timestamp);
+            timeFormatted = dateObj.toLocaleTimeString('vi-VN') + ' ' + dateObj.toLocaleDateString('vi-VN');
+        } else if (item.timestamp) {
+            timeFormatted = item.timestamp;
+        }
+
         html += `
-        <tr style="border-bottom: 1px solid #1e293b;">
+        <tr style="border-bottom: 1px solid #1e293b; ${rowOpacity}">
             <td style="padding: 10px 8px;">
                 <div class="badge-copy badge-blue" onclick="copyToClipboard('${item.fileId}', this)" title="Bấm để sao chép Mã Tệp">
                     <span>${shortId}</span>
@@ -456,7 +485,8 @@ function loadReceiveHistory() {
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                 </div>
             </td>
-            <td style="padding: 10px 8px; color: #94a3b8;">${item.timestamp}</td>
+            <td style="padding: 10px 8px; color: #94a3b8;">${timeFormatted}</td>
+            <td style="padding: 10px 8px;">${statusText}</td>
             <td style="padding: 10px 8px; text-align: center;">
                 <button class="btn-delete-item" onclick="deleteReceiveHistoryItem(${index})" title="Xóa dòng này">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
@@ -467,18 +497,6 @@ function loadReceiveHistory() {
 
     html += `</tbody></table>`;
     container.innerHTML = html;
-}
-
-function clearReceiveHistory() {
-    showModal(
-        'Xác nhận xóa',
-        'Bạn có chắc chắn muốn xóa sạch toàn bộ lịch sử tệp đã nhận trên trình duyệt này không?',
-        true,
-        () => {
-            localStorage.removeItem('receiveHistory');
-            loadReceiveHistory();
-        }
-    );
 }
 
 function deleteReceiveHistoryItem(index) {
