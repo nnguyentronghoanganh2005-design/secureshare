@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chia Sẻ Tệp Mã Hóa Đầu-Cuối (E2EE)</title>
-    <!-- Thư viện JSZip để nén nhiều tệp -->
+    <title>SecureShare - Mã Hóa & Chia Sẻ Tệp Bảo Mật E2EE</title>
+    <!-- Thư viện JSZip hỗ trợ nén nhiều tệp -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
         * {
@@ -15,104 +15,128 @@
         }
 
         body {
-            background-color: #0f172a;
+            background-color: #0b1120;
             color: #f1f5f9;
-            min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
+            min-height: 100vh;
             padding: 20px;
         }
 
-        .container {
+        .main-container {
             width: 100%;
-            max-width: 750px;
-            background: #1e293b;
-            border-radius: 16px;
-            padding: 24px;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
-            border: 1px solid #334155;
-        }
-
-        .header {
+            max-width: 860px;
             text-align: center;
-            margin-bottom: 24px;
         }
 
         .header h1 {
-            font-size: 1.5rem;
-            color: #6366f1;
+            font-size: 2.2rem;
+            color: #818cf8;
+            font-weight: 700;
             margin-bottom: 6px;
         }
 
         .header p {
-            font-size: 0.875rem;
             color: #94a3b8;
+            font-size: 0.92rem;
+            margin-bottom: 24px;
         }
 
-        /* Nav Tabs */
-        .tabs {
+        /* Tabs Navigation */
+        .tab-container {
             display: flex;
-            gap: 10px;
+            background-color: #131b2e;
+            border-radius: 12px;
+            padding: 4px;
             margin-bottom: 20px;
-            background: #0f172a;
-            padding: 6px;
-            border-radius: 10px;
+            border: 1px solid #1e293b;
         }
 
         .tab-btn {
             flex: 1;
-            padding: 10px;
+            padding: 11px 16px;
             border: none;
             background: transparent;
             color: #94a3b8;
             font-weight: 600;
+            font-size: 0.92rem;
             border-radius: 8px;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
 
         .tab-btn.active {
-            background: #6366f1;
+            background-color: #6366f1;
             color: #ffffff;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
         }
 
-        /* Drag and Drop Zone */
+        /* Card Container */
+        .card {
+            background-color: #131b2e;
+            border-radius: 16px;
+            padding: 24px;
+            border: 1px solid #1e293b;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            margin-bottom: 20px;
+        }
+
+        /* Dropzone */
         .drop-zone {
-            border: 2px dashed #475569;
+            border: 2px dashed #313d52;
             border-radius: 12px;
-            padding: 30px 20px;
-            text-align: center;
+            padding: 36px 20px;
+            background-color: rgba(255, 255, 255, 0.01);
             cursor: pointer;
-            transition: border-color 0.2s;
-            margin-bottom: 16px;
+            transition: all 0.2s ease;
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
         }
 
         .drop-zone:hover {
             border-color: #6366f1;
+            background-color: rgba(99, 102, 241, 0.03);
         }
 
-        .file-input {
-            display: none;
+        .drop-zone-icon {
+            margin-bottom: 12px;
+            color: #818cf8;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        /* Inputs & Buttons */
-        .form-group {
+        .drop-zone-text {
+            color: #cbd5e1;
+            font-size: 0.9rem;
+        }
+
+        /* Input Controls */
+        .input-group {
             margin-bottom: 16px;
+            text-align: left;
         }
 
-        .form-group label {
+        .input-group label {
             display: block;
-            font-size: 0.85rem;
             color: #94a3b8;
+            font-size: 0.85rem;
             margin-bottom: 6px;
         }
 
         .input-field {
             width: 100%;
-            padding: 12px;
-            background: #0f172a;
-            border: 1px solid #334155;
+            padding: 12px 14px;
+            background-color: #0b1120;
+            border: 1px solid #1e293b;
             border-radius: 8px;
             color: #f1f5f9;
             font-size: 0.9rem;
@@ -124,118 +148,195 @@
             border-color: #6366f1;
         }
 
-        .btn-action {
+        /* Buttons */
+        .btn-primary {
             width: 100%;
-            padding: 12px;
-            background: #6366f1;
+            padding: 13px;
+            background-color: #6366f1;
             color: white;
             border: none;
-            border-radius: 8px;
+            border-radius: 10px;
             font-weight: 600;
+            font-size: 0.98rem;
             cursor: pointer;
+            transition: background 0.2s ease;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 8px;
-            transition: background 0.2s;
         }
 
-        .btn-action:hover {
-            background: #4f46e5;
+        .btn-primary:hover {
+            background-color: #4f46e5;
         }
 
-        .btn-action:disabled {
-            opacity: 0.6;
+        .btn-primary:disabled {
+            background-color: #312e81;
             cursor: not-allowed;
+            opacity: 0.7;
         }
 
-        /* Result Boxes */
+        /* Result Box */
         .result-box {
             margin-top: 16px;
-            background: #0f172a;
-            padding: 16px;
-            border-radius: 8px;
-            border: 1px solid #334155;
+            padding: 18px;
+            background-color: #0b1120;
+            border-radius: 12px;
+            border: 1px solid #1e293b;
+            text-align: left;
+            font-size: 0.88rem;
+            line-height: 1.8;
         }
 
-        /* History Section */
-        .history-section {
-            margin-top: 24px;
-            border-top: 1px solid #334155;
-            padding-top: 16px;
+        .code-pill {
+            background-color: #1e293b;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 0.85rem;
+            word-break: break-all;
+        }
+
+        .code-pill.blue { 
+            color: #818cf8; 
+            background-color: rgba(99, 102, 241, 0.15);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+        }
+
+        .code-pill.red { 
+            color: #f43f5e; 
+            background-color: rgba(244, 63, 94, 0.15);
+            border: 1px solid rgba(244, 63, 94, 0.3);
+        }
+
+        .btn-copy-box {
+            background: #1e293b;
+            border: 1px solid #334155;
+            color: #cbd5e1;
+            padding: 4px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-copy-box:hover {
+            background: #6366f1;
+            color: #fff;
+            border-color: #6366f1;
+        }
+
+        /* Badges Lịch Sử */
+        .badge-copy {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 0.83rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+
+        .badge-blue {
+            background-color: rgba(99, 102, 241, 0.15);
+            color: #818cf8;
+            border: 1px solid rgba(99, 102, 241, 0.25);
+        }
+
+        .badge-blue:hover {
+            background-color: rgba(99, 102, 241, 0.3);
+            border-color: #818cf8;
+        }
+
+        .badge-red {
+            background-color: rgba(244, 63, 94, 0.15);
+            color: #f43f5e;
+            border: 1px solid rgba(244, 63, 94, 0.25);
+        }
+
+        .badge-red:hover {
+            background-color: rgba(244, 63, 94, 0.3);
+            border-color: #f43f5e;
+        }
+
+        .btn-quick-fill {
+            background: rgba(99, 102, 241, 0.2);
+            color: #818cf8;
+            border: 1px solid rgba(99, 102, 241, 0.4);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.78rem;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .btn-quick-fill:hover {
+            background: #6366f1;
+            color: #fff;
+        }
+
+        /* History Table Container */
+        .history-card {
+            background-color: #131b2e;
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid #1e293b;
+            text-align: left;
         }
 
         .history-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 12px;
+            margin-bottom: 16px;
         }
 
         .history-title {
             font-size: 0.95rem;
             font-weight: 600;
+            color: #f1f5f9;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .btn-refresh {
-            background: transparent;
-            border: none;
-            color: #94a3b8;
+            background-color: rgba(255, 255, 255, 0.05);
+            color: #cbd5e1;
+            border: 1px solid #2a364f;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.8rem;
             cursor: pointer;
-            padding: 4px;
-            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
         }
 
         .btn-refresh:hover {
-            color: #f1f5f9;
-        }
-
-        .btn-refresh.spinning svg {
-            animation: spin 0.5s linear;
+            background-color: #ef4444;
+            color: #fff;
+            border-color: #ef4444;
         }
 
         @keyframes spin {
-            100% { transform: rotate(360deg); }
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
         }
 
-        /* Badges & Pills */
-        .code-pill {
-            background: #0f172a;
-            border: 1px solid #334155;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-family: monospace;
-            font-size: 0.85rem;
-        }
-
-        .code-pill.blue { color: #60a5fa; }
-        .code-pill.red { color: #f87171; }
-
-        .badge-copy {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            padding: 3px 6px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-family: monospace;
-            background: #0f172a;
-        }
-
-        .badge-copy.badge-blue { color: #60a5fa; border: 1px solid #1e3a8a; }
-        .badge-copy.badge-red { color: #f87171; border: 1px solid #881337; }
-
-        .btn-copy-box {
-            background: #334155;
-            border: none;
-            color: white;
-            padding: 4px 8px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.75rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
+        .spinning svg {
+            animation: spin 0.5s linear;
         }
 
         .btn-delete-item {
@@ -243,168 +344,226 @@
             border: none;
             cursor: pointer;
             padding: 4px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: background 0.2s;
         }
 
-        /* Toast & Modal */
+        .btn-delete-item:hover {
+            background-color: rgba(239, 68, 68, 0.2);
+        }
+
+        /* Toast Notification */
         .toast {
             position: fixed;
-            bottom: 20px;
-            right: 20px;
+            bottom: 24px;
+            right: 24px;
             background: #1e293b;
             color: #f1f5f9;
+            border: 1px solid #6366f1;
             padding: 12px 20px;
-            border-radius: 8px;
-            border: 1px solid #334155;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-            z-index: 1000;
-            transition: opacity 0.3s;
+            border-radius: 10px;
+            font-size: 0.88rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            z-index: 10000;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
+        /* Custom Popup Modal Overlay */
         .modal-overlay {
             position: fixed;
             top: 0;
             left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.7);
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(4px);
             display: flex;
-            justify-content: center;
             align-items: center;
-            z-index: 999;
+            justify-content: center;
+            z-index: 9999;
         }
 
-        .modal {
-            background: #1e293b;
-            padding: 20px;
-            border-radius: 12px;
-            width: 90%;
-            max-width: 400px;
+        .modal-card {
+            background: #131b2e;
             border: 1px solid #334155;
+            border-radius: 16px;
+            padding: 24px;
+            width: 90%;
+            max-width: 420px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
         }
 
         .modal-title {
-            font-size: 1.1rem;
-            font-weight: 600;
-            margin-bottom: 8px;
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #f1f5f9;
+            margin-bottom: 10px;
         }
 
         .modal-message {
             font-size: 0.9rem;
-            color: #94a3b8;
+            color: #cbd5e1;
             margin-bottom: 20px;
+            line-height: 1.5;
         }
 
         .modal-actions {
             display: flex;
-            justify-content: flex-end;
             gap: 10px;
+            justify-content: center;
         }
 
-        .btn-modal {
-            padding: 8px 16px;
-            border-radius: 6px;
-            border: none;
+        .btn-modal-cancel {
+            flex: 1;
+            padding: 10px;
+            background: #1e293b;
+            color: #cbd5e1;
+            border: 1px solid #334155;
+            border-radius: 8px;
             cursor: pointer;
             font-weight: 600;
         }
 
-        .btn-modal-cancel { background: #334155; color: white; }
-        .btn-modal-confirm { background: #ef4444; color: white; }
-        .btn-modal-confirm.info { background: #6366f1; }
+        .btn-modal-confirm {
+            flex: 1;
+            padding: 10px;
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
 
-        .hidden { display: none !important; }
+        .btn-modal-confirm.info {
+            background: #6366f1;
+        }
+
+        .hidden {
+            display: none !important;
+        }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="header">
-        <h1>🔒 Secure File Share</h1>
-        <p>Mã hóa tệp trực tiếp trên trình duyệt - Bảo mật tối đa</p>
-    </div>
-
-    <!-- Navigation Tabs -->
-    <div class="tabs">
-        <button id="tabUploadBtn" class="tab-btn active" onclick="switchTab('upload')">Gửi Tệp Tin</button>
-        <button id="tabDownloadBtn" class="tab-btn" onclick="switchTab('download')">Nhận Tệp Tin</button>
-    </div>
-
-    <!-- TAB 1: UPLOAD & ENCRYPT -->
-    <div id="uploadSection">
-        <div id="dropZone" class="drop-zone" onclick="document.getElementById('fileInput').click()">
-            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" style="margin-bottom: 8px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-            <p id="fileNameDisplay">Nhấp vào đây hoặc kéo thả tệp vào đây</p>
-            <input type="file" id="fileInput" class="file-input" multiple onchange="handleFileSelect(this.files)">
+    <div class="main-container">
+        <!-- Header -->
+        <div class="header">
+            <h1>SecureShare</h1>
+            <p>Chia sẻ tệp tin mã hóa bảo mật E2EE (Tệp tự động xóa sau 24h)</p>
         </div>
 
-        <button id="btnEncrypt" class="btn-action" onclick="encryptAndUpload()">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-            <span>Mã Hóa & Gửi Tệp</span>
-        </button>
+        <!-- Navigation Tabs -->
+        <div class="tab-container">
+            <button class="tab-btn active" id="tabUploadBtn" onclick="switchTab('upload')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                <span>Gửi Tệp</span>
+            </button>
+            <button class="tab-btn" id="tabDownloadBtn" onclick="switchTab('download')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                <span>Nhận Tệp</span>
+            </button>
+        </div>
 
-        <div id="uploadResult" class="result-box hidden"></div>
+        <!-- TAB GỬI TỆP -->
+        <div id="uploadSection">
+            <div class="card">
+                <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+                    <input type="file" id="fileInput" style="display: none;" multiple onchange="handleFileSelect(this.files)">
+                    <div class="drop-zone-icon">
+                        <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="#818cf8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 12 15 15"/></svg>
+                    </div>
+                    <div class="drop-zone-text">Nhấn để chọn tệp (có thể chọn nhiều) hoặc kéo thả vào đây</div>
+                    <div id="fileNameDisplay" style="margin-top: 10px; color: #818cf8; font-weight: 600; font-size: 0.88rem;"></div>
+                </div>
 
-        <!-- Lịch sử Đã Gửi -->
-        <div class="history-section">
-            <div class="history-header">
-                <span class="history-title">📜 Lịch sử đã gửi</span>
-                <button class="btn-refresh" onclick="refreshHistory('upload', this)" title="Xóa toàn bộ lịch sử gửi">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                <button id="btnEncrypt" class="btn-primary" onclick="encryptAndUpload()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    <span>Mã Hóa & Gửi Tệp</span>
                 </button>
+
+                <div id="uploadResult" class="result-box hidden"></div>
             </div>
-            <div id="historyTableContainer"></div>
+
+            <!-- Bảng Lịch Sử Gửi -->
+            <div class="history-card">
+                <div class="history-header">
+                    <div class="history-title">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#818cf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>
+                        <span>Lịch Sử Đã Gửi (Trên Máy Này)</span>
+                    </div>
+                    <button class="btn-refresh" id="btnRefreshUpload" onclick="refreshHistory('upload', this)">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6"/><path d="M21.34 15.57a10 10 0 1 1-.57-8.38l2.37-2.37"/></svg>
+                        <span>Làm mới & Reset</span>
+                    </button>
+                </div>
+                <div id="historyTableContainer"></div>
+            </div>
         </div>
-    </div>
 
-    <!-- TAB 2: DOWNLOAD & DECRYPT -->
-    <div id="downloadSection" class="hidden">
-        <div class="form-group">
-            <label for="fileIdInput">Mã Tệp (File ID):</label>
-            <input type="text" id="fileIdInput" class="input-field" placeholder="Nhập Mã Tệp...">
-        </div>
+        <!-- TAB NHẬN TỆP -->
+        <div id="downloadSection" class="hidden">
+            <div class="card">
+                <div class="input-group">
+                    <label for="fileIdInput">Mã Tệp (File ID)</label>
+                    <input type="text" id="fileIdInput" class="input-field" placeholder="Nhập Mã Tệp...">
+                </div>
 
-        <div class="form-group">
-            <label for="keyInput">Khóa Giải Mã (Secret Key Hex):</label>
-            <input type="text" id="keyInput" class="input-field" placeholder="Nhập Khóa Giải Mã...">
-        </div>
+                <div class="input-group">
+                    <label for="keyInput">Khóa Giải Mã (Secret Key)</label>
+                    <input type="text" id="keyInput" class="input-field" placeholder="Nhập Khóa Giải Mã...">
+                </div>
 
-        <button id="btnDecrypt" class="btn-action" onclick="downloadAndDecrypt()">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
-            <span>Tải Về & Giải Mã</span>
-        </button>
-
-        <div id="downloadResult" class="result-box hidden"></div>
-
-        <!-- Lịch sử Đã Nhận -->
-        <div class="history-section">
-            <div class="history-header">
-                <span class="history-title">📥 Lịch sử đã nhận</span>
-                <button class="btn-refresh" onclick="refreshHistory('receive', this)" title="Xóa toàn bộ lịch sử nhận">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                <button id="btnDecrypt" class="btn-primary" onclick="downloadAndDecrypt()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
+                    <span>Tải Về & Giải Mã</span>
                 </button>
+
+                <div id="downloadResult" class="result-box hidden"></div>
             </div>
-            <div id="receiveHistoryTableContainer"></div>
+
+            <!-- Bảng Lịch Sử Nhận -->
+            <div class="history-card">
+                <div class="history-header">
+                    <div class="history-title">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#818cf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>
+                        <span>Lịch Sử Đã Nhận (Trên Máy Này)</span>
+                    </div>
+                    <button class="btn-refresh" id="btnRefreshReceive" onclick="refreshHistory('receive', this)">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6"/><path d="M21.34 15.57a10 10 0 1 1-.57-8.38l2.37-2.37"/></svg>
+                        <span>Làm mới & Reset</span>
+                    </button>
+                </div>
+                <div id="receiveHistoryTableContainer"></div>
+            </div>
         </div>
     </div>
-</div>
 
-<!-- Toast Popup Notification -->
-<div id="toast" class="toast hidden">
-    <span id="toastMsg"></span>
-</div>
+    <!-- TOAST POPUP NOTIFICATION -->
+    <div id="toast" class="toast hidden">
+        <span>✨</span>
+        <span id="toastMsg">Thông báo</span>
+    </div>
 
-<!-- Custom Confirmation Modal -->
-<div id="customModal" class="modal-overlay hidden">
-    <div class="modal">
-        <div id="modalTitle" class="modal-title">Thông báo</div>
-        <div id="modalMessage" class="modal-message">Nội dung thông báo...</div>
-        <div class="modal-actions">
-            <button id="modalCancelBtn" class="btn-modal btn-modal-cancel" onclick="closeModal()">Hủy</button>
-            <button id="modalConfirmBtn" class="btn-modal btn-modal-confirm">Đồng ý</button>
+    <!-- CUSTOM POPUP MODAL DIALOG -->
+    <div id="customModal" class="modal-overlay hidden">
+        <div class="modal-card">
+            <div id="modalTitle" class="modal-title">Xác nhận</div>
+            <div id="modalMessage" class="modal-message">Nội dung...</div>
+            <div class="modal-actions">
+                <button id="modalCancelBtn" class="btn-modal-cancel" onclick="closeModal()">Hủy</button>
+                <button id="modalConfirmBtn" class="btn-modal-confirm">Đồng ý</button>
+            </div>
         </div>
     </div>
-</div>
 
-<script src="app.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>
