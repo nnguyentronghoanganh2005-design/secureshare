@@ -36,11 +36,11 @@ function showModal(title, message, isConfirm = false, onConfirm = null) {
 
     if (isConfirm) {
         cancelBtn.classList.remove('hidden');
-        confirmBtn.className = 'btn-modal-confirm';
+        confirmBtn.className = 'btn-modal btn-modal-confirm';
         confirmBtn.innerText = 'Đồng ý';
     } else {
         cancelBtn.classList.add('hidden');
-        confirmBtn.className = 'btn-modal-confirm info';
+        confirmBtn.className = 'btn-modal btn-modal-confirm info';
         confirmBtn.innerText = 'Đã hiểu';
     }
 
@@ -86,26 +86,6 @@ function fallbackCopy(text) {
         showModal('Lỗi', 'Không thể tự động sao chép văn bản!');
     }
     document.body.removeChild(textArea);
-}
-
-// Tự động dán Mã Tệp & Khóa Giải Mã sang Tab Nhận Tệp
-function quickFillDownload(fileId, key) {
-    switchTab('download');
-    const fileIdInput = document.getElementById('fileIdInput');
-    const keyInput = document.getElementById('keyInput');
-
-    fileIdInput.value = fileId.trim();
-    keyInput.value = key.trim();
-
-    fileIdInput.style.borderColor = '#6366f1';
-    keyInput.style.borderColor = '#6366f1';
-
-    setTimeout(() => {
-        fileIdInput.style.borderColor = '#1e293b';
-        keyInput.style.borderColor = '#1e293b';
-    }, 1500);
-
-    showToast('🚀 Đã tự động điền Mã Tệp & Khóa Giải Mã!');
 }
 
 // Chuyển Tab
@@ -436,7 +416,6 @@ function loadLocalHistory() {
                 <th style="padding: 10px 8px;">Khóa Giải Mã</th>
                 <th style="padding: 10px 8px;">Thời Gian</th>
                 <th style="padding: 10px 8px;">Trạng Thái</th>
-                <th style="padding: 10px 8px; text-align: center;">Thao Tác</th>
                 <th style="padding: 10px 8px; text-align: center;">Xóa</th>
             </tr>
         </thead>
@@ -474,11 +453,6 @@ function loadLocalHistory() {
             </td>
             <td style="padding: 10px 8px; color: #94a3b8;">${timeFormatted}</td>
             <td style="padding: 10px 8px;">${statusText}</td>
-            <td style="padding: 10px 8px; text-align: center;">
-                <button class="btn-quick-fill" onclick="quickFillDownload('${item.fileId}', '${item.key}')" title="Chuyển sang Tab Nhận và tự điền mã">
-                    ⚡ Dán & Nhận
-                </button>
-            </td>
             <td style="padding: 10px 8px; text-align: center;">
                 <button class="btn-delete-item" onclick="deleteUploadHistoryItem(${index})" title="Xóa dòng này">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
@@ -540,7 +514,6 @@ function loadReceiveHistory() {
                 <th style="padding: 10px 8px;">Khóa Giải Mã</th>
                 <th style="padding: 10px 8px;">Thời Gian</th>
                 <th style="padding: 10px 8px;">Trạng Thái</th>
-                <th style="padding: 10px 8px; text-align: center;">Thao Tác</th>
                 <th style="padding: 10px 8px; text-align: center;">Xóa</th>
             </tr>
         </thead>
@@ -578,11 +551,6 @@ function loadReceiveHistory() {
             </td>
             <td style="padding: 10px 8px; color: #94a3b8;">${timeFormatted}</td>
             <td style="padding: 10px 8px;">${statusText}</td>
-            <td style="padding: 10px 8px; text-align: center;">
-                <button class="btn-quick-fill" onclick="quickFillDownload('${item.fileId}', '${item.key}')" title="Tải lại tệp này">
-                    ⚡ Dán & Nhận
-                </button>
-            </td>
             <td style="padding: 10px 8px; text-align: center;">
                 <button class="btn-delete-item" onclick="deleteReceiveHistoryItem(${index})" title="Xóa dòng này">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
