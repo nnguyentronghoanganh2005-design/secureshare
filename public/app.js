@@ -1,17 +1,16 @@
 let selectedFiles = [];
 let pendingModalAction = null;
 
-// Giới hạn dung lượng upload (Mặc định 100MB cho Render Free)
+// Giới hạn dung lượng upload (100MB cho Render Free)
 const MAX_FILE_SIZE_MB = 100; 
 
-// Khởi tạo giao diện
 document.addEventListener('DOMContentLoaded', () => {
     loadLocalHistory();
     loadReceiveHistory();
     setupDragAndDrop();
 });
 
-// --- CỬA SỔ POPUP MODAL TÙY CHỈNH (THAY THẾ CONFIRM & ALERT) ---
+// Custom Modal Popup Window
 function showModal(title, message, isConfirm = false, onConfirm = null) {
     const modal = document.getElementById('customModal');
     const modalTitle = document.getElementById('modalTitle');
@@ -46,23 +45,20 @@ function closeModal() {
     pendingModalAction = null;
 }
 
-// --- HÀM SAO CHÉP VÀO CLIPBOARD CÓ THÔNG BÁO ---
-function copyToClipboard(text, btnElement) {
+// Copy vào clipboard
+function copyToClipboard(text, element) {
     navigator.clipboard.writeText(text).then(() => {
-        const originalHTML = btnElement.innerHTML;
-        btnElement.innerHTML = `
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-            <span style="color:#4ade80;">Đã chép</span>
-        `;
+        const originalContent = element.innerHTML;
+        element.style.opacity = '0.6';
         setTimeout(() => {
-            btnElement.innerHTML = originalHTML;
-        }, 1500);
+            element.style.opacity = '1';
+        }, 200);
     }).catch(err => {
         showModal('Lỗi', 'Không thể sao chép văn bản vào bộ nhớ tạm!');
     });
 }
 
-// Chuyển đổi Tab
+// Chuyển Tab
 function switchTab(tabName) {
     const uploadSection = document.getElementById('uploadSection');
     const downloadSection = document.getElementById('downloadSection');
@@ -82,27 +78,23 @@ function switchTab(tabName) {
     }
 }
 
-// Xử lý kéo thả tệp vào DropZone
+// Drag & Drop
 function setupDragAndDrop() {
     const dropZone = document.getElementById('dropZone');
 
     ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-        dropZone.addEventListener(eventName, preventDefaults, false);
+        dropZone.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+        }, false);
     });
-
-    function preventDefaults(e) {
-        e.preventDefault();
-        e.stopPropagation();
-    }
 
     dropZone.addEventListener('drop', (e) => {
         const dt = e.dataTransfer;
-        const files = dt.files;
-        handleFileSelect(files);
+        handleFileSelect(dt.files);
     });
 }
 
-// Xử lý chọn tệp
 function handleFileSelect(files) {
     if (!files || files.length === 0) return;
     selectedFiles = Array.from(files);
@@ -132,7 +124,7 @@ function hexToBuffer(hexString) {
     return bytes;
 }
 
-// Mã hóa và Tải lên (Kiểm tra kích thước & Bắt lỗi chuẩn)
+// Mã hóa và Tải lên
 async function encryptAndUpload() {
     const resultBox = document.getElementById('uploadResult');
     const btnEncrypt = document.getElementById('btnEncrypt');
@@ -142,7 +134,6 @@ async function encryptAndUpload() {
         return;
     }
 
-    // Kiểm tra giới hạn dung lượng trước khi xử lý
     let totalSize = selectedFiles.reduce((acc, f) => acc + f.size, 0);
     const totalMB = totalSize / (1024 * 1024);
     if (totalMB > MAX_FILE_SIZE_MB) {
@@ -215,28 +206,30 @@ async function encryptAndUpload() {
 
         saveToUploadHistory(fileId, secretKeyHex, fileName);
 
-        // Hiển thị kết quả kèm nút Copy SVG
+        // Khung hiển thị kết quả giống image_aa9ff3.png
         resultBox.innerHTML = `
-            <div style="color: #4ade80; font-weight: 600; margin-bottom: 8px;">Tải lên & Mã hóa thành công!</div>
-            <div style="margin-bottom: 8px; display: flex; align-items: center; flex-wrap: wrap; gap: 4px;">
+            <div style="color: #4ade80; font-weight: 600; margin-bottom: 10px;">Tải lên & Mã hóa thành công!</div>
+            <div style="margin-bottom: 8px; display: flex; align-items: center; flex-wrap: wrap; gap: 6px;">
                 <b>Mã Tệp (File ID):</b> 
-                <code style="color:#818cf8; background:#1e293b; padding:2px 6px; border-radius:4px;">${fileId}</code>
-                <button class="btn-copy" onclick="copyToClipboard('${fileId}', this)">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy
+                <span class="code-pill blue">${fileId}</span>
+                <button class="btn-copy-box" onclick="copyToClipboard('${fileId}', this)">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                    Copy
                 </button>
             </div>
-            <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px;">
+            <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 6px;">
                 <b>Khóa Giải Mã (Secret Key):</b> 
-                <code style="color:#f43f5e; background:#1e293b; padding:2px 6px; border-radius:4px;">${secretKeyHex}</code>
-                <button class="btn-copy" onclick="copyToClipboard('${secretKeyHex}', this)">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy
+                <span class="code-pill red">${secretKeyHex}</span>
+                <button class="btn-copy-box" onclick="copyToClipboard('${secretKeyHex}', this)">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                    Copy
                 </button>
             </div>
         `;
         resultBox.classList.remove('hidden');
 
     } catch (err) {
-        showModal('Tải lên thất bại', err.message || 'Không thể tải tệp lên server. Vui lòng kiểm tra lại đường truyền!');
+        showModal('Tải lên thất bại', err.message || 'Không thể tải tệp lên server!');
     } finally {
         btnEncrypt.disabled = false;
         btnEncrypt.innerHTML = `
@@ -264,7 +257,7 @@ async function downloadAndDecrypt() {
         resultBox.classList.add('hidden');
 
         const response = await fetch(`/api/download/${fileId}`);
-        if (!response.ok) throw new Error('Không tìm thấy tệp hoặc tệp đã bị xóa tự động sau 24h');
+        if (!response.ok) throw new Error('Không tìm thấy tệp hoặc tệp đã bị xóa sau 24h');
 
         const encryptedBuffer = await response.arrayBuffer();
         const bytes = new Uint8Array(encryptedBuffer);
@@ -307,7 +300,7 @@ async function downloadAndDecrypt() {
         resultBox.classList.remove('hidden');
 
     } catch (err) {
-        showModal('Giải mã thất bại', 'Mã tệp hoặc Khóa giải mã không chính xác, hoặc tệp đã bị xóa sau 24 giờ!');
+        showModal('Giải mã thất bại', 'Mã tệp hoặc Khóa giải mã không chính xác, hoặc tệp đã bị xóa!');
     } finally {
         btnDecrypt.disabled = false;
         btnDecrypt.innerHTML = `
@@ -317,7 +310,7 @@ async function downloadAndDecrypt() {
     }
 }
 
-// --- Quản Lý Lịch Sử Gửi (Bảng lịch sử tích hợp nút Copy) ---
+// --- Lịch Sử Gửi (Theo giao diện image_aa4d63.png) ---
 function saveToUploadHistory(fileId, key, fileName) {
     let history = JSON.parse(localStorage.getItem('uploadHistory') || '[]');
     history.unshift({
@@ -344,31 +337,34 @@ function loadLocalHistory() {
     <table style="width: 100%; font-size: 0.85rem; color: #f1f5f9; border-collapse: collapse;">
         <thead>
             <tr style="text-align: left; color: #94a3b8; border-bottom: 1px solid #1e293b;">
-                <th style="padding: 8px;">Mã Tệp (File ID)</th>
-                <th style="padding: 8px;">Khóa Giải Mã</th>
-                <th style="padding: 8px;">Thời Gian</th>
-                <th style="padding: 8px; text-align: center;">Xóa</th>
+                <th style="padding: 10px 8px;">Mã Tệp (File ID)</th>
+                <th style="padding: 10px 8px;">Khóa Giải Mã</th>
+                <th style="padding: 10px 8px;">Thời Gian</th>
+                <th style="padding: 10px 8px; text-align: center;">Xóa</th>
             </tr>
         </thead>
         <tbody>`;
 
     history.forEach((item, index) => {
+        const shortId = item.fileId ? item.fileId.substring(0, 8) + '...' : '';
+        const shortKey = item.key ? item.key.substring(0, 8) + '...' : '';
+
         html += `
         <tr style="border-bottom: 1px solid #1e293b;">
-            <td style="padding: 8px; font-family: monospace; color: #818cf8;">
-                ${item.fileId}
-                <button class="btn-copy" onclick="copyToClipboard('${item.fileId}', this)">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                </button>
+            <td style="padding: 10px 8px;">
+                <div class="badge-copy badge-blue" onclick="copyToClipboard('${item.fileId}', this)" title="Bấm để sao chép Mã Tệp">
+                    <span>${shortId}</span>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                </div>
             </td>
-            <td style="padding: 8px; font-family: monospace; color: #f43f5e;">
-                ${item.key}
-                <button class="btn-copy" onclick="copyToClipboard('${item.key}', this)">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                </button>
+            <td style="padding: 10px 8px;">
+                <div class="badge-copy badge-red" onclick="copyToClipboard('${item.key}', this)" title="Bấm để sao chép Khóa Giải Mã">
+                    <span>${shortKey}</span>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                </div>
             </td>
-            <td style="padding: 8px; color: #94a3b8;">${item.timestamp}</td>
-            <td style="padding: 8px; text-align: center;">
+            <td style="padding: 10px 8px; color: #94a3b8;">${item.timestamp}</td>
+            <td style="padding: 10px 8px; text-align: center;">
                 <button class="btn-delete-item" onclick="deleteUploadHistoryItem(${index})" title="Xóa dòng này">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                 </button>
@@ -380,7 +376,6 @@ function loadLocalHistory() {
     container.innerHTML = html;
 }
 
-// Bấm nút Làm mới sẽ hiển thị Popup Modal hỏi người dùng
 function clearUploadHistory() {
     showModal(
         'Xác nhận xóa',
@@ -400,7 +395,7 @@ function deleteUploadHistoryItem(index) {
     loadLocalHistory();
 }
 
-// --- Quản Lý Lịch Sử Nhận ---
+// --- Lịch Sử Nhận ---
 function saveToReceiveHistory(fileId, key, fileName) {
     let history = JSON.parse(localStorage.getItem('receiveHistory') || '[]');
     history.unshift({
@@ -427,31 +422,34 @@ function loadReceiveHistory() {
     <table style="width: 100%; font-size: 0.85rem; color: #f1f5f9; border-collapse: collapse;">
         <thead>
             <tr style="text-align: left; color: #94a3b8; border-bottom: 1px solid #1e293b;">
-                <th style="padding: 8px;">Mã Tệp (File ID)</th>
-                <th style="padding: 8px;">Khóa Giải Mã</th>
-                <th style="padding: 8px;">Thời Gian</th>
-                <th style="padding: 8px; text-align: center;">Xóa</th>
+                <th style="padding: 10px 8px;">Mã Tệp (File ID)</th>
+                <th style="padding: 10px 8px;">Khóa Giải Mã</th>
+                <th style="padding: 10px 8px;">Thời Gian</th>
+                <th style="padding: 10px 8px; text-align: center;">Xóa</th>
             </tr>
         </thead>
         <tbody>`;
 
     history.forEach((item, index) => {
+        const shortId = item.fileId ? item.fileId.substring(0, 8) + '...' : '';
+        const shortKey = item.key ? item.key.substring(0, 8) + '...' : '';
+
         html += `
         <tr style="border-bottom: 1px solid #1e293b;">
-            <td style="padding: 8px; font-family: monospace; color: #818cf8;">
-                ${item.fileId}
-                <button class="btn-copy" onclick="copyToClipboard('${item.fileId}', this)">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                </button>
+            <td style="padding: 10px 8px;">
+                <div class="badge-copy badge-blue" onclick="copyToClipboard('${item.fileId}', this)" title="Bấm để sao chép Mã Tệp">
+                    <span>${shortId}</span>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                </div>
             </td>
-            <td style="padding: 8px; font-family: monospace; color: #f43f5e;">
-                ${item.key}
-                <button class="btn-copy" onclick="copyToClipboard('${item.key}', this)">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                </button>
+            <td style="padding: 10px 8px;">
+                <div class="badge-copy badge-red" onclick="copyToClipboard('${item.key}', this)" title="Bấm để sao chép Khóa Giải Mã">
+                    <span>${shortKey}</span>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                </div>
             </td>
-            <td style="padding: 8px; color: #94a3b8;">${item.timestamp}</td>
-            <td style="padding: 8px; text-align: center;">
+            <td style="padding: 10px 8px; color: #94a3b8;">${item.timestamp}</td>
+            <td style="padding: 10px 8px; text-align: center;">
                 <button class="btn-delete-item" onclick="deleteReceiveHistoryItem(${index})" title="Xóa dòng này">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                 </button>
