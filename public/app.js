@@ -36,11 +36,11 @@ function showModal(title, message, isConfirm = false, onConfirm = null) {
 
     if (isConfirm) {
         cancelBtn.classList.remove('hidden');
-        confirmBtn.className = 'btn-modal btn-modal-confirm';
+        confirmBtn.className = 'btn-modal-confirm';
         confirmBtn.innerText = 'Đồng ý';
     } else {
         cancelBtn.classList.add('hidden');
-        confirmBtn.className = 'btn-modal btn-modal-confirm info';
+        confirmBtn.className = 'btn-modal-confirm info';
         confirmBtn.innerText = 'Đã hiểu';
     }
 
