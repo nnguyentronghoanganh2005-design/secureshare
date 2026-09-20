@@ -1,6 +1,6 @@
 let selectedFiles = [];
 
-// Khởi tạo ứng dụng
+// Khởi tạo giao diện
 document.addEventListener('DOMContentLoaded', () => {
     loadLocalHistory();
     loadReceiveHistory();
@@ -47,7 +47,7 @@ function setupDragAndDrop() {
     });
 }
 
-// Xử lý khi người dùng chọn file
+// Xử lý khi chọn file
 function handleFileSelect(files) {
     if (!files || files.length === 0) return;
     selectedFiles = Array.from(files);
@@ -80,7 +80,7 @@ function hexToBuffer(hexString) {
     return bytes;
 }
 
-// Mã hóa và Tải lên
+// Mã hóa và Tải lên (Khớp với Multer & Route /api/upload)
 async function encryptAndUpload() {
     const resultBox = document.getElementById('uploadResult');
     const btnEncrypt = document.getElementById('btnEncrypt');
@@ -98,7 +98,7 @@ async function encryptAndUpload() {
         let fileBuffer;
         let fileName;
 
-        // Nếu chọn nhiều file -> tự động nén ZIP
+        // Nếu chọn nhiều tệp -> Tự động nén thành file ZIP
         if (selectedFiles.length > 1) {
             const zip = new JSZip();
             selectedFiles.forEach(f => zip.file(f.name, f));
@@ -110,7 +110,7 @@ async function encryptAndUpload() {
             fileName = singleFile.name;
         }
 
-        // Tạo khóa AES-GCM 256-bit
+        // Tạo khóa AES-GCM 256-bit chuẩn E2EE
         const cryptoKey = await window.crypto.subtle.generateKey(
             { name: 'AES-GCM', length: 256 },
             true,
@@ -124,11 +124,11 @@ async function encryptAndUpload() {
             fileBuffer
         );
 
-        // Xuất khóa thô
+        // Xuất khóa thô dạng Hex
         const exportedKey = await window.crypto.subtle.exportKey('raw', cryptoKey);
         const secretKeyHex = bufferToHex(exportedKey);
 
-        // Đóng gói Header: Tên tệp + IV + Dữ liệu mã hóa
+        // Đóng gói Header: Tên tệp + IV (12 bytes) + Dữ liệu mã hóa
         const encoder = new TextEncoder();
         const nameBytes = encoder.encode(fileName);
         const nameLen = nameBytes.length;
@@ -139,22 +139,26 @@ async function encryptAndUpload() {
         payload.set(iv, 1 + nameLen);
         payload.set(new Uint8Array(encryptedData), 1 + nameLen + 12);
 
-        // Gửi tệp mã hóa lên Server
+        // Đóng gói FormData để tương thích với Multer backend
         btnEncrypt.innerHTML = '<span>⏳ Đang tải tệp lên server...</span>';
-        const response = await fetch('/upload', {
+        const blob = new Blob([payload], { type: 'application/octet-stream' });
+        const formData = new FormData();
+        formData.append('encryptedFile', blob, 'encrypted.bin');
+
+        // Gửi lên Route API
+        const response = await fetch('/api/upload', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/octet-stream' },
-            body: payload
+            body: formData
         });
 
         if (!response.ok) throw new Error('Không thể tải tệp lên server');
         const data = await response.json();
         const fileId = data.fileId;
 
-        // Lưu lịch sử gửi
+        // Lưu vết lịch sử gửi
         saveToUploadHistory(fileId, secretKeyHex, fileName);
 
-        // Hiển thị kết quả
+        // Hiển thị mã tệp và khóa cho người dùng
         resultBox.innerHTML = `
             <div style="color: #4ade80; font-weight: 600; margin-bottom: 8px;">Tải lên & Mã hóa thành công!</div>
             <div style="margin-bottom: 6px;"><b>Mã Tệp (File ID):</b> <code style="color:#818cf8;">${fileId}</code></div>
@@ -173,7 +177,7 @@ async function encryptAndUpload() {
     }
 }
 
-// Tải về và Giải mã
+// Tải về và Giải mã (Khớp với Route /api/download/:fileId)
 async function downloadAndDecrypt() {
     const fileId = document.getElementById('fileIdInput').value.trim();
     const keyHex = document.getElementById('keyInput').value.trim();
@@ -190,7 +194,8 @@ async function downloadAndDecrypt() {
         btnDecrypt.innerHTML = '<span>⏳ Đang tải tệp về...</span>';
         resultBox.classList.add('hidden');
 
-        const response = await fetch(`/file/${fileId}`);
+        // Gọi API tải tệp mã hóa
+        const response = await fetch(`/api/download/${fileId}`);
         if (!response.ok) throw new Error('Không tìm thấy tệp hoặc tệp đã bị xóa sau 24h');
 
         const encryptedBuffer = await response.arrayBuffer();
@@ -213,7 +218,7 @@ async function downloadAndDecrypt() {
             ['decrypt']
         );
 
-        // Giải mã
+        // Giải mã dữ liệu
         btnDecrypt.innerHTML = '<span>⏳ Đang giải mã tệp...</span>';
         const decryptedBuffer = await window.crypto.subtle.decrypt(
             { name: 'AES-GCM', iv: iv },
@@ -221,7 +226,7 @@ async function downloadAndDecrypt() {
             ciphertext
         );
 
-        // Tự động kích hoạt tải xuống
+        // Kích hoạt tải file xuống máy
         const blob = new Blob([decryptedBuffer]);
         const downloadUrl = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -232,7 +237,7 @@ async function downloadAndDecrypt() {
         a.remove();
         URL.revokeObjectURL(downloadUrl);
 
-        // Lưu lịch sử nhận
+        // Lưu vào lịch sử nhận
         saveToReceiveHistory(fileId, keyHex, fileName);
 
         resultBox.innerHTML = `<div style="color: #4ade80; font-weight: 600;">Giải mã & Tải về thành công: <b>${fileName}</b></div>`;
@@ -305,7 +310,7 @@ function loadLocalHistory() {
     container.innerHTML = html;
 }
 
-// Xóa sạch toàn bộ lịch sử gửi khi bấm nút Làm mới
+// Xóa sạch toàn bộ lịch sử gửi khi nhấn Làm mới
 function clearUploadHistory() {
     if (confirm("Bạn có chắc chắn muốn xóa sạch toàn bộ lịch sử đã gửi không?")) {
         localStorage.removeItem('uploadHistory');
@@ -376,7 +381,7 @@ function loadReceiveHistory() {
     container.innerHTML = html;
 }
 
-// Xóa sạch toàn bộ lịch sử nhận khi bấm nút Làm mới
+// Xóa sạch toàn bộ lịch sử nhận khi nhấn Làm mới
 function clearReceiveHistory() {
     if (confirm("Bạn có chắc chắn muốn xóa sạch toàn bộ lịch sử đã nhận không?")) {
         localStorage.removeItem('receiveHistory');
