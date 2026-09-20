@@ -1,7 +1,7 @@
 let selectedFiles = [];
 let pendingModalAction = null;
 
-// Giới hạn dung lượng upload (100MB cho Render Free)
+// Giới hạn dung lượng upload
 const MAX_FILE_SIZE_MB = 100; 
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -48,11 +48,11 @@ function closeModal() {
 // Copy vào clipboard
 function copyToClipboard(text, element) {
     navigator.clipboard.writeText(text).then(() => {
-        const originalContent = element.innerHTML;
-        element.style.opacity = '0.6';
+        const originalOpacity = element.style.opacity;
+        element.style.opacity = '0.5';
         setTimeout(() => {
-            element.style.opacity = '1';
-        }, 200);
+            element.style.opacity = originalOpacity || '1';
+        }, 150);
     }).catch(err => {
         showModal('Lỗi', 'Không thể sao chép văn bản vào bộ nhớ tạm!');
     });
@@ -206,10 +206,11 @@ async function encryptAndUpload() {
 
         saveToUploadHistory(fileId, secretKeyHex, fileName);
 
-        // Khung hiển thị kết quả giống image_aa9ff3.png
+        // Khung hiển thị kết quả chuẩn 100% giống image_aa9ff3.png
         resultBox.innerHTML = `
-            <div style="color: #4ade80; font-weight: 600; margin-bottom: 10px;">Tải lên & Mã hóa thành công!</div>
-            <div style="margin-bottom: 8px; display: flex; align-items: center; flex-wrap: wrap; gap: 6px;">
+            <div style="color: #22c55e; font-weight: 600; margin-bottom: 12px; font-size: 0.95rem;">Tải lên & Mã hóa thành công!</div>
+            
+            <div style="margin-bottom: 10px; display: flex; align-items: center; flex-wrap: wrap; gap: 8px;">
                 <b>Mã Tệp (File ID):</b> 
                 <span class="code-pill blue">${fileId}</span>
                 <button class="btn-copy-box" onclick="copyToClipboard('${fileId}', this)">
@@ -217,13 +218,20 @@ async function encryptAndUpload() {
                     Copy
                 </button>
             </div>
-            <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 6px;">
-                <b>Khóa Giải Mã (Secret Key):</b> 
-                <span class="code-pill red">${secretKeyHex}</span>
-                <button class="btn-copy-box" onclick="copyToClipboard('${secretKeyHex}', this)">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                    Copy
-                </button>
+
+            <div style="margin-bottom: 12px;">
+                <div style="margin-bottom: 4px;"><b>Khóa Giải Mã (Secret Key):</b></div>
+                <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 8px;">
+                    <span class="code-pill red">${secretKeyHex}</span>
+                    <button class="btn-copy-box" onclick="copyToClipboard('${secretKeyHex}', this)">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                        Copy
+                    </button>
+                </div>
+            </div>
+
+            <div style="color: #64748b; font-size: 0.8rem; border-top: 1px dashed #1e293b; padding-top: 8px; margin-top: 8px;">
+                ⏱️ <i>Lưu ý: Tệp của bạn hoạt động và tự động xóa khỏi hệ thống sau 24 giờ.</i>
             </div>
         `;
         resultBox.classList.remove('hidden');
@@ -296,11 +304,11 @@ async function downloadAndDecrypt() {
 
         saveToReceiveHistory(fileId, keyHex, fileName);
 
-        resultBox.innerHTML = `<div style="color: #4ade80; font-weight: 600;">Giải mã & Tải về thành công: <b>${fileName}</b></div>`;
+        resultBox.innerHTML = `<div style="color: #22c55e; font-weight: 600;">Giải mã & Tải về thành công: <b>${fileName}</b></div>`;
         resultBox.classList.remove('hidden');
 
     } catch (err) {
-        showModal('Giải mã thất bại', 'Mã tệp hoặc Khóa giải mã không chính xác, hoặc tệp đã bị xóa!');
+        showModal('Giải mã thất bại', 'Mã tệp hoặc Khóa giải mã không chính xác, hoặc tệp đã bị xóa sau 24 giờ!');
     } finally {
         btnDecrypt.disabled = false;
         btnDecrypt.innerHTML = `
@@ -310,7 +318,7 @@ async function downloadAndDecrypt() {
     }
 }
 
-// --- Lịch Sử Gửi (Theo giao diện image_aa4d63.png) ---
+// --- Lịch Sử Gửi (Chuẩn theo image_aa4d63.png) ---
 function saveToUploadHistory(fileId, key, fileName) {
     let history = JSON.parse(localStorage.getItem('uploadHistory') || '[]');
     history.unshift({
