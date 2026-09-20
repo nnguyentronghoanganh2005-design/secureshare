@@ -1,4 +1,8 @@
 let selectedFiles = [];
+let pendingModalAction = null;
+
+// Giới hạn dung lượng upload (Mặc định 100MB cho Render Free)
+const MAX_FILE_SIZE_MB = 100; 
 
 // Khởi tạo giao diện
 document.addEventListener('DOMContentLoaded', () => {
@@ -6,6 +10,57 @@ document.addEventListener('DOMContentLoaded', () => {
     loadReceiveHistory();
     setupDragAndDrop();
 });
+
+// --- CỬA SỔ POPUP MODAL TÙY CHỈNH (THAY THẾ CONFIRM & ALERT) ---
+function showModal(title, message, isConfirm = false, onConfirm = null) {
+    const modal = document.getElementById('customModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalMessage = document.getElementById('modalMessage');
+    const cancelBtn = document.getElementById('modalCancelBtn');
+    const confirmBtn = document.getElementById('modalConfirmBtn');
+
+    modalTitle.innerText = title;
+    modalMessage.innerText = message;
+
+    if (isConfirm) {
+        cancelBtn.classList.remove('hidden');
+        confirmBtn.className = 'btn-modal-confirm';
+        confirmBtn.innerText = 'Đồng ý';
+    } else {
+        cancelBtn.classList.add('hidden');
+        confirmBtn.className = 'btn-modal-confirm info';
+        confirmBtn.innerText = 'Đã hiểu';
+    }
+
+    pendingModalAction = onConfirm;
+    confirmBtn.onclick = () => {
+        if (pendingModalAction) pendingModalAction();
+        closeModal();
+    };
+
+    modal.classList.remove('hidden');
+}
+
+function closeModal() {
+    document.getElementById('customModal').classList.add('hidden');
+    pendingModalAction = null;
+}
+
+// --- HÀM SAO CHÉP VÀO CLIPBOARD CÓ THÔNG BÁO ---
+function copyToClipboard(text, btnElement) {
+    navigator.clipboard.writeText(text).then(() => {
+        const originalHTML = btnElement.innerHTML;
+        btnElement.innerHTML = `
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            <span style="color:#4ade80;">Đã chép</span>
+        `;
+        setTimeout(() => {
+            btnElement.innerHTML = originalHTML;
+        }, 1500);
+    }).catch(err => {
+        showModal('Lỗi', 'Không thể sao chép văn bản vào bộ nhớ tạm!');
+    });
+}
 
 // Chuyển đổi Tab
 function switchTab(tabName) {
@@ -27,7 +82,7 @@ function switchTab(tabName) {
     }
 }
 
-// Xử lý sự kiện kéo thả file vào DropZone
+// Xử lý kéo thả tệp vào DropZone
 function setupDragAndDrop() {
     const dropZone = document.getElementById('dropZone');
 
@@ -47,31 +102,28 @@ function setupDragAndDrop() {
     });
 }
 
-// Xử lý khi chọn file
+// Xử lý chọn tệp
 function handleFileSelect(files) {
     if (!files || files.length === 0) return;
     selectedFiles = Array.from(files);
 
     const display = document.getElementById('fileNameDisplay');
+    let totalSize = selectedFiles.reduce((acc, f) => acc + f.size, 0);
+    const totalSizeMB = (totalSize / (1024 * 1024)).toFixed(2);
+
     if (selectedFiles.length === 1) {
-        const file = selectedFiles[0];
-        const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
-        display.innerText = `${file.name} (${sizeMB} MB)`;
+        display.innerText = `${selectedFiles[0].name} (${totalSizeMB} MB)`;
     } else {
-        let totalSize = selectedFiles.reduce((acc, f) => acc + f.size, 0);
-        const totalSizeMB = (totalSize / (1024 * 1024)).toFixed(2);
         display.innerText = `Đã chọn ${selectedFiles.length} tệp (Tổng: ${totalSizeMB} MB)`;
     }
 }
 
-// Chuyển ArrayBuffer thành chuỗi Hex
 function bufferToHex(buffer) {
     return Array.from(new Uint8Array(buffer))
         .map(b => b.toString(16).padStart(2, '0'))
         .join('');
 }
 
-// Chuyển chuỗi Hex thành Uint8Array
 function hexToBuffer(hexString) {
     const bytes = new Uint8Array(Math.ceil(hexString.length / 2));
     for (let i = 0; i < bytes.length; i++) {
@@ -80,13 +132,21 @@ function hexToBuffer(hexString) {
     return bytes;
 }
 
-// Mã hóa và Tải lên (Khớp với Multer & Route /api/upload)
+// Mã hóa và Tải lên (Kiểm tra kích thước & Bắt lỗi chuẩn)
 async function encryptAndUpload() {
     const resultBox = document.getElementById('uploadResult');
     const btnEncrypt = document.getElementById('btnEncrypt');
 
     if (!selectedFiles || selectedFiles.length === 0) {
-        alert('Vui lòng chọn ít nhất 1 tệp tin!');
+        showModal('Thông báo', 'Vui lòng chọn ít nhất 1 tệp tin trước khi gửi!');
+        return;
+    }
+
+    // Kiểm tra giới hạn dung lượng trước khi xử lý
+    let totalSize = selectedFiles.reduce((acc, f) => acc + f.size, 0);
+    const totalMB = totalSize / (1024 * 1024);
+    if (totalMB > MAX_FILE_SIZE_MB) {
+        showModal('Quá dung lượng', `Tổng dung lượng tệp (${totalMB.toFixed(1)}MB) vượt quá giới hạn tối đa cho phép (${MAX_FILE_SIZE_MB}MB). Vui lòng chọn tệp nhỏ hơn!`);
         return;
     }
 
@@ -98,7 +158,6 @@ async function encryptAndUpload() {
         let fileBuffer;
         let fileName;
 
-        // Nếu chọn nhiều tệp -> Tự động nén thành file ZIP
         if (selectedFiles.length > 1) {
             const zip = new JSZip();
             selectedFiles.forEach(f => zip.file(f.name, f));
@@ -110,7 +169,6 @@ async function encryptAndUpload() {
             fileName = singleFile.name;
         }
 
-        // Tạo khóa AES-GCM 256-bit chuẩn E2EE
         const cryptoKey = await window.crypto.subtle.generateKey(
             { name: 'AES-GCM', length: 256 },
             true,
@@ -124,11 +182,9 @@ async function encryptAndUpload() {
             fileBuffer
         );
 
-        // Xuất khóa thô dạng Hex
         const exportedKey = await window.crypto.subtle.exportKey('raw', cryptoKey);
         const secretKeyHex = bufferToHex(exportedKey);
 
-        // Đóng gói Header: Tên tệp + IV (12 bytes) + Dữ liệu mã hóa
         const encoder = new TextEncoder();
         const nameBytes = encoder.encode(fileName);
         const nameLen = nameBytes.length;
@@ -139,35 +195,48 @@ async function encryptAndUpload() {
         payload.set(iv, 1 + nameLen);
         payload.set(new Uint8Array(encryptedData), 1 + nameLen + 12);
 
-        // Đóng gói FormData để tương thích với Multer backend
         btnEncrypt.innerHTML = '<span>⏳ Đang tải tệp lên server...</span>';
         const blob = new Blob([payload], { type: 'application/octet-stream' });
         const formData = new FormData();
         formData.append('encryptedFile', blob, 'encrypted.bin');
 
-        // Gửi lên Route API
         const response = await fetch('/api/upload', {
             method: 'POST',
             body: formData
         });
 
-        if (!response.ok) throw new Error('Không thể tải tệp lên server');
+        if (!response.ok) {
+            if (response.status === 413) throw new Error('Tệp vượt quá giới hạn dung lượng của Server');
+            throw new Error('Lỗi từ Server khi lưu tệp');
+        }
+
         const data = await response.json();
         const fileId = data.fileId;
 
-        // Lưu vết lịch sử gửi
         saveToUploadHistory(fileId, secretKeyHex, fileName);
 
-        // Hiển thị mã tệp và khóa cho người dùng
+        // Hiển thị kết quả kèm nút Copy SVG
         resultBox.innerHTML = `
             <div style="color: #4ade80; font-weight: 600; margin-bottom: 8px;">Tải lên & Mã hóa thành công!</div>
-            <div style="margin-bottom: 6px;"><b>Mã Tệp (File ID):</b> <code style="color:#818cf8;">${fileId}</code></div>
-            <div><b>Khóa Giải Mã (Secret Key):</b> <code style="color:#f43f5e;">${secretKeyHex}</code></div>
+            <div style="margin-bottom: 8px; display: flex; align-items: center; flex-wrap: wrap; gap: 4px;">
+                <b>Mã Tệp (File ID):</b> 
+                <code style="color:#818cf8; background:#1e293b; padding:2px 6px; border-radius:4px;">${fileId}</code>
+                <button class="btn-copy" onclick="copyToClipboard('${fileId}', this)">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy
+                </button>
+            </div>
+            <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px;">
+                <b>Khóa Giải Mã (Secret Key):</b> 
+                <code style="color:#f43f5e; background:#1e293b; padding:2px 6px; border-radius:4px;">${secretKeyHex}</code>
+                <button class="btn-copy" onclick="copyToClipboard('${secretKeyHex}', this)">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy
+                </button>
+            </div>
         `;
         resultBox.classList.remove('hidden');
 
     } catch (err) {
-        alert('Lỗi: ' + err.message);
+        showModal('Tải lên thất bại', err.message || 'Không thể tải tệp lên server. Vui lòng kiểm tra lại đường truyền!');
     } finally {
         btnEncrypt.disabled = false;
         btnEncrypt.innerHTML = `
@@ -177,7 +246,7 @@ async function encryptAndUpload() {
     }
 }
 
-// Tải về và Giải mã (Khớp với Route /api/download/:fileId)
+// Tải về và Giải mã
 async function downloadAndDecrypt() {
     const fileId = document.getElementById('fileIdInput').value.trim();
     const keyHex = document.getElementById('keyInput').value.trim();
@@ -185,7 +254,7 @@ async function downloadAndDecrypt() {
     const btnDecrypt = document.getElementById('btnDecrypt');
 
     if (!fileId || !keyHex) {
-        alert('Vui lòng nhập đầy đủ Mã Tệp và Khóa Giải Mã!');
+        showModal('Thiếu thông tin', 'Vui lòng nhập đầy đủ Mã Tệp và Khóa Giải Mã!');
         return;
     }
 
@@ -194,21 +263,18 @@ async function downloadAndDecrypt() {
         btnDecrypt.innerHTML = '<span>⏳ Đang tải tệp về...</span>';
         resultBox.classList.add('hidden');
 
-        // Gọi API tải tệp mã hóa
         const response = await fetch(`/api/download/${fileId}`);
-        if (!response.ok) throw new Error('Không tìm thấy tệp hoặc tệp đã bị xóa sau 24h');
+        if (!response.ok) throw new Error('Không tìm thấy tệp hoặc tệp đã bị xóa tự động sau 24h');
 
         const encryptedBuffer = await response.arrayBuffer();
         const bytes = new Uint8Array(encryptedBuffer);
 
-        // Bóc tách Header
         const nameLen = bytes[0];
         const nameBytes = bytes.slice(1, 1 + nameLen);
         const fileName = new TextDecoder().decode(nameBytes);
         const iv = bytes.slice(1 + nameLen, 1 + nameLen + 12);
         const ciphertext = bytes.slice(1 + nameLen + 12);
 
-        // Nhập khóa giải mã
         const rawKey = hexToBuffer(keyHex);
         const cryptoKey = await window.crypto.subtle.importKey(
             'raw',
@@ -218,7 +284,6 @@ async function downloadAndDecrypt() {
             ['decrypt']
         );
 
-        // Giải mã dữ liệu
         btnDecrypt.innerHTML = '<span>⏳ Đang giải mã tệp...</span>';
         const decryptedBuffer = await window.crypto.subtle.decrypt(
             { name: 'AES-GCM', iv: iv },
@@ -226,7 +291,6 @@ async function downloadAndDecrypt() {
             ciphertext
         );
 
-        // Kích hoạt tải file xuống máy
         const blob = new Blob([decryptedBuffer]);
         const downloadUrl = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -237,14 +301,13 @@ async function downloadAndDecrypt() {
         a.remove();
         URL.revokeObjectURL(downloadUrl);
 
-        // Lưu vào lịch sử nhận
         saveToReceiveHistory(fileId, keyHex, fileName);
 
         resultBox.innerHTML = `<div style="color: #4ade80; font-weight: 600;">Giải mã & Tải về thành công: <b>${fileName}</b></div>`;
         resultBox.classList.remove('hidden');
 
     } catch (err) {
-        alert('Giải mã thất bại: Mã tệp hoặc Khóa giải mã không chính xác!');
+        showModal('Giải mã thất bại', 'Mã tệp hoặc Khóa giải mã không chính xác, hoặc tệp đã bị xóa sau 24 giờ!');
     } finally {
         btnDecrypt.disabled = false;
         btnDecrypt.innerHTML = `
@@ -254,7 +317,7 @@ async function downloadAndDecrypt() {
     }
 }
 
-// --- QUẢN LÝ LỊCH SỬ GỬI ---
+// --- Quản Lý Lịch Sử Gửi (Bảng lịch sử tích hợp nút Copy) ---
 function saveToUploadHistory(fileId, key, fileName) {
     let history = JSON.parse(localStorage.getItem('uploadHistory') || '[]');
     history.unshift({
@@ -290,13 +353,20 @@ function loadLocalHistory() {
         <tbody>`;
 
     history.forEach((item, index) => {
-        const shortId = item.fileId.length > 10 ? item.fileId.substring(0, 8) + '...' : item.fileId;
-        const shortKey = item.key.length > 10 ? item.key.substring(0, 8) + '...' : item.key;
-
         html += `
         <tr style="border-bottom: 1px solid #1e293b;">
-            <td style="padding: 8px; font-family: monospace; color: #818cf8;">${shortId}</td>
-            <td style="padding: 8px; font-family: monospace; color: #f43f5e;">${shortKey}</td>
+            <td style="padding: 8px; font-family: monospace; color: #818cf8;">
+                ${item.fileId}
+                <button class="btn-copy" onclick="copyToClipboard('${item.fileId}', this)">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                </button>
+            </td>
+            <td style="padding: 8px; font-family: monospace; color: #f43f5e;">
+                ${item.key}
+                <button class="btn-copy" onclick="copyToClipboard('${item.key}', this)">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                </button>
+            </td>
             <td style="padding: 8px; color: #94a3b8;">${item.timestamp}</td>
             <td style="padding: 8px; text-align: center;">
                 <button class="btn-delete-item" onclick="deleteUploadHistoryItem(${index})" title="Xóa dòng này">
@@ -310,12 +380,17 @@ function loadLocalHistory() {
     container.innerHTML = html;
 }
 
-// Xóa sạch toàn bộ lịch sử gửi khi nhấn Làm mới
+// Bấm nút Làm mới sẽ hiển thị Popup Modal hỏi người dùng
 function clearUploadHistory() {
-    if (confirm("Bạn có chắc chắn muốn xóa sạch toàn bộ lịch sử đã gửi không?")) {
-        localStorage.removeItem('uploadHistory');
-        loadLocalHistory();
-    }
+    showModal(
+        'Xác nhận xóa',
+        'Bạn có chắc chắn muốn xóa sạch toàn bộ lịch sử tệp đã gửi trên trình duyệt này không?',
+        true,
+        () => {
+            localStorage.removeItem('uploadHistory');
+            loadLocalHistory();
+        }
+    );
 }
 
 function deleteUploadHistoryItem(index) {
@@ -325,7 +400,7 @@ function deleteUploadHistoryItem(index) {
     loadLocalHistory();
 }
 
-// --- QUẢN LÝ LỊCH SỬ NHẬN ---
+// --- Quản Lý Lịch Sử Nhận ---
 function saveToReceiveHistory(fileId, key, fileName) {
     let history = JSON.parse(localStorage.getItem('receiveHistory') || '[]');
     history.unshift({
@@ -361,13 +436,20 @@ function loadReceiveHistory() {
         <tbody>`;
 
     history.forEach((item, index) => {
-        const shortId = item.fileId.length > 10 ? item.fileId.substring(0, 8) + '...' : item.fileId;
-        const shortKey = item.key ? (item.key.length > 10 ? item.key.substring(0, 8) + '...' : item.key) : '---';
-
         html += `
         <tr style="border-bottom: 1px solid #1e293b;">
-            <td style="padding: 8px; font-family: monospace; color: #818cf8;">${shortId}</td>
-            <td style="padding: 8px; font-family: monospace; color: #f43f5e;">${shortKey}</td>
+            <td style="padding: 8px; font-family: monospace; color: #818cf8;">
+                ${item.fileId}
+                <button class="btn-copy" onclick="copyToClipboard('${item.fileId}', this)">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                </button>
+            </td>
+            <td style="padding: 8px; font-family: monospace; color: #f43f5e;">
+                ${item.key}
+                <button class="btn-copy" onclick="copyToClipboard('${item.key}', this)">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                </button>
+            </td>
             <td style="padding: 8px; color: #94a3b8;">${item.timestamp}</td>
             <td style="padding: 8px; text-align: center;">
                 <button class="btn-delete-item" onclick="deleteReceiveHistoryItem(${index})" title="Xóa dòng này">
@@ -381,12 +463,16 @@ function loadReceiveHistory() {
     container.innerHTML = html;
 }
 
-// Xóa sạch toàn bộ lịch sử nhận khi nhấn Làm mới
 function clearReceiveHistory() {
-    if (confirm("Bạn có chắc chắn muốn xóa sạch toàn bộ lịch sử đã nhận không?")) {
-        localStorage.removeItem('receiveHistory');
-        loadReceiveHistory();
-    }
+    showModal(
+        'Xác nhận xóa',
+        'Bạn có chắc chắn muốn xóa sạch toàn bộ lịch sử tệp đã nhận trên trình duyệt này không?',
+        true,
+        () => {
+            localStorage.removeItem('receiveHistory');
+            loadReceiveHistory();
+        }
+    );
 }
 
 function deleteReceiveHistoryItem(index) {
