@@ -107,7 +107,7 @@
     .input-wrap input { min-width: 0; flex: 1; }
 
     /* History Card */
-    .history-card { background: linear-gradient(180deg, #151e33f5, #11192af5); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; text-align: left; }
+    .history-card { background: linear-gradient(180deg, #151e33f5, #11192af5); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; text-align: left; margin-bottom: 20px; }
     .history-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
     .history-title { font-size: 15px; font-weight: 700; color: white; display: flex; align-items: center; gap: 8px; }
     .btn-refresh { background: #17223a; color: #cbd5e1; border: 1px solid var(--border); padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
@@ -178,7 +178,7 @@
           <div class="hint">Hoặc chọn tệp từ máy tính của bạn</div>
           <button class="browse" id="browseButton" type="button" onclick="event.stopPropagation(); document.getElementById('fileInput').click()">＋ Chọn tệp</button>
         </div>
-        <div class="fineprint"><span>✓ Hỗ trợ nén nhiều tệp</span><span>•</span><span>Giới hạn 100 MB</span></div>
+        <div class="fineprint"><span>✓ Hỗ trợ nén nhiều tệp</span><span>•</span><span>Giới hạn tối đa 100 MB</span></div>
         
         <div class="file-list" id="fileList"></div>
         <div id="fileNameDisplay" style="display:none;"></div>
