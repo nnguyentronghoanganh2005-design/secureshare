@@ -3,8 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Nhóm 6 — Chia sẻ tệp an toàn E2EE</title>
-  <!-- Thư viện JSZip hỗ trợ nén nhiều tệp -->
+  <title>SecureShare — Chia sẻ tệp an toàn E2EE</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <style>
     :root {
@@ -86,6 +85,14 @@
     .secondary { color: #d6d9f5; border: 1px solid var(--border); background: #17223a; }
     .secondary:hover { border-color: #69759a; }
     
+    /* Căn giữa nút Tải Về & Giải Mã */
+    #btnDecrypt {
+      display: block;
+      margin: 0 auto;
+      width: 100%;
+      max-width: 320px;
+    }
+
     /* Result Box */
     .result-box { margin-top: 20px; border-radius: 14px; border: 1px solid var(--border); background: #0c1424; padding: 18px; text-align: left; }
     .result-item { margin-bottom: 12px; }
@@ -149,7 +156,7 @@
     <header>
       <div class="brand">
         <div class="brand-mark" aria-hidden="true">⌁</div>
-        <div><h1>Nhóm 6</h1><p>Chia sẻ tệp riêng tư mã hóa E2EE</p></div>
+        <div><h1>SecureShare</h1><p>Chia sẻ tệp riêng tư E2EE</p></div>
       </div>
       <div class="secure-pill"><span aria-hidden="true">🔒</span> Bảo mật đầu-cuối</div>
     </header>
@@ -242,12 +249,10 @@
     <footer><span>⌁ SecureShare E2EE</span><span>•</span><span>Tự động hủy tệp sau 24h</span><span>•</span><span>Responsive</span></footer>
   </div>
 
-  <!-- TOAST POPUP NOTIFICATION -->
   <div id="toast" class="toast hidden">
     <span id="toastMsg">Thông báo</span>
   </div>
 
-  <!-- CUSTOM POPUP MODAL DIALOG -->
   <div id="customModal" class="modal-overlay hidden">
     <div class="modal-card">
       <div id="modalTitle" class="modal-title">Xác nhận</div>
