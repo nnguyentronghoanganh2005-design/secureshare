@@ -158,8 +158,6 @@ function formatBytes(bytes) {
 function handleFileSelect(files) {
     if (!files || files.length === 0) return;
     const incoming = Array.from(files);
-    
-    // Đổ tệp mới vào mảng
     incoming.forEach(f => selectedFiles.push(f));
     renderFileList();
 }
@@ -219,6 +217,24 @@ function hexToBuffer(hexString) {
         bytes[i] = parseInt(cleanHex.substr(i * 2, 2), 16);
     }
     return bytes;
+}
+
+// Hàm đoán MIME type cho tệp
+function getMimeType(fileName) {
+    const ext = fileName.split('.').pop().toLowerCase();
+    const mimeMap = {
+        'jpg': 'image/jpeg',
+        'jpeg': 'image/jpeg',
+        'png': 'image/png',
+        'gif': 'image/gif',
+        'webp': 'image/webp',
+        'mp4': 'video/mp4',
+        'webm': 'video/webm',
+        'mp3': 'audio/mpeg',
+        'pdf': 'application/pdf',
+        'txt': 'text/plain'
+    };
+    return mimeMap[ext] || 'application/octet-stream';
 }
 
 // 1. Mã hóa và Tải tệp lên
@@ -294,7 +310,7 @@ async function encryptAndUpload() {
         });
 
         if (!response.ok) {
-            if (response.status === 413) throw new Error('Tệp vượt quá giới hạn dung lượng Server');
+            if (response.status === 413) throw new Error('Tệp vượt quá giới hạn dung lượng Server (100MB)');
             throw new Error('Lỗi từ Server khi lưu tệp');
         }
 
@@ -338,7 +354,7 @@ async function encryptAndUpload() {
     }
 }
 
-// 2. Tải về và Giải mã tệp
+// 2. Tải về và Giải mã tệp (Hỗ trợ xem trước ảnh)
 async function downloadAndDecrypt() {
     const rawFileId = document.getElementById('fileIdInput').value.trim();
     const rawKeyHex = document.getElementById('keyInput').value.trim();
@@ -352,7 +368,7 @@ async function downloadAndDecrypt() {
 
     const cleanKeyHex = rawKeyHex.replace(/[^0-9a-fA-F]/g, '');
     if (cleanKeyHex.length !== 64 && cleanKeyHex.length !== 32) {
-        showModal('Lỗi khóa giải mã', `Khóa AES-256 phải dài 64 ký tự Hex. Khóa bạn nhập dài ${cleanKeyHex.length} ký tự.`);
+        showModal('Lỗi khóa giải mã', `Khóa AES phải dài 32 hoặc 64 ký tự Hex.`);
         return;
     }
 
@@ -366,7 +382,7 @@ async function downloadAndDecrypt() {
         
         if (!response.ok) {
             if (response.status === 404) {
-                throw new Error('Mã tệp không tồn tại hoặc đã bị xóa sau 24h!');
+                throw new Error('Mã tệp không tồn tại hoặc đã tự động xóa sau 24h!');
             }
             throw new Error('Không thể kết nối tới server tải tệp!');
         }
@@ -396,19 +412,34 @@ async function downloadAndDecrypt() {
             ciphertext
         );
 
-        const blob = new Blob([decryptedBuffer]);
+        const mimeType = getMimeType(fileName);
+        const blob = new Blob([decryptedBuffer], { type: mimeType });
         const downloadUrl = URL.createObjectURL(blob);
+
         const a = document.createElement('a');
         a.href = downloadUrl;
         a.download = fileName;
         document.body.appendChild(a);
         a.click();
         a.remove();
-        URL.revokeObjectURL(downloadUrl);
 
         saveToReceiveHistory(rawFileId, cleanKeyHex, fileName);
 
-        resultBox.innerHTML = `<div style="color: #4ade80; font-weight: 600;">🎉 Giải mã & Tải về thành công: <b>${fileName}</b></div>`;
+        const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileName.split('.').pop().toLowerCase());
+        let previewHtml = '';
+        if (isImage) {
+            previewHtml = `
+                <div style="margin-top: 12px; text-align: center;">
+                    <p style="font-size: 12px; color: #9aa8c4; margin-bottom: 6px;">Xem trước hình ảnh:</p>
+                    <img src="${downloadUrl}" alt="${fileName}" style="max-width: 100%; max-height: 280px; border-radius: 10px; border: 1px solid #283650;" />
+                </div>
+            `;
+        }
+
+        resultBox.innerHTML = `
+            <div style="color: #4ade80; font-weight: 600;">🎉 Giải mã & Tải về thành công: <b>${fileName}</b></div>
+            ${previewHtml}
+        `;
         resultBox.classList.remove('hidden');
 
     } catch (err) {
