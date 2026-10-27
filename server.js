@@ -12,10 +12,10 @@ if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
 }
 
-// Cấu hình Multer (Thêm giới hạn 300MB để tránh tràn RAM trên Render Free)
+// Cấu hình Multer (Giới hạn tối đa 100MB)
 const upload = multer({ 
     dest: uploadDir,
-    limits: { fileSize: 300 * 1024 * 1024 } 
+    limits: { fileSize: 100 * 1024 * 1024 } 
 });
 
 // =========================================================================
