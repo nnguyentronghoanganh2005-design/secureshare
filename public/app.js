@@ -94,49 +94,39 @@ function switchTab(tabName) {
     const downloadSection = document.getElementById('downloadSection');
     const tabUploadBtn = document.getElementById('tabUploadBtn');
     const tabDownloadBtn = document.getElementById('tabDownloadBtn');
+    const uploadHistoryCard = document.getElementById('uploadHistoryCard');
+    const receiveHistoryCard = document.getElementById('receiveHistoryCard');
 
     if (tabName === 'upload') {
         uploadSection.classList.remove('hidden');
         downloadSection.classList.add('hidden');
         tabUploadBtn.classList.add('active');
         tabDownloadBtn.classList.remove('active');
+        if (uploadHistoryCard) uploadHistoryCard.classList.remove('hidden');
+        if (receiveHistoryCard) receiveHistoryCard.classList.add('hidden');
     } else {
         uploadSection.classList.add('hidden');
         downloadSection.classList.remove('hidden');
         tabUploadBtn.classList.remove('active');
         tabDownloadBtn.classList.add('active');
+        if (uploadHistoryCard) uploadHistoryCard.classList.add('hidden');
+        if (receiveHistoryCard) receiveHistoryCard.classList.remove('hidden');
     }
 }
 
-// LÀM MỚI & RESET TOÀN BỘ LỊCH SỬ (Có hiện Popup xác nhận)
-function refreshHistory(type, btnElement) {
-    const titleName = type === 'upload' ? 'Lịch sử đã gửi' : 'Lịch sử đã nhận';
-
-    showModal(
-        'Xác nhận Làm mới',
-        `Bạn có chắc chắn muốn làm mới và XÓA TOÀN BỘ danh sách trong "${titleName}" trên trình duyệt này không?`,
-        true,
-        () => {
-            if (btnElement) {
-                btnElement.classList.add('spinning');
-                setTimeout(() => btnElement.classList.remove('spinning'), 500);
-            }
-
-            if (type === 'upload') {
-                localStorage.removeItem('uploadHistory');
-                loadLocalHistory();
-            } else {
-                localStorage.removeItem('receiveHistory');
-                loadReceiveHistory();
-            }
-            showToast('🔄 Đã xóa toàn bộ lịch sử thành công!');
-        }
-    );
+// Đổi trạng thái Ẩn/Hiện Khóa Giải Mã
+function toggleKeyVisibility() {
+    const input = document.getElementById('keyInput');
+    const btn = document.getElementById('toggleKey');
+    const showing = input.type === 'text';
+    input.type = showing ? 'password' : 'text';
+    btn.textContent = showing ? 'Hiện' : 'Ẩn';
 }
 
 // Drag & Drop Handling
 function setupDragAndDrop() {
     const dropZone = document.getElementById('dropZone');
+    if (!dropZone) return;
 
     ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
         dropZone.addEventListener(eventName, (e) => {
@@ -145,25 +135,74 @@ function setupDragAndDrop() {
         }, false);
     });
 
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.addEventListener(eventName, () => dropZone.classList.add('dragover'), false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, () => dropZone.classList.remove('dragover'), false);
+    });
+
     dropZone.addEventListener('drop', (e) => {
         const dt = e.dataTransfer;
         handleFileSelect(dt.files);
     });
 }
 
+function formatBytes(bytes) {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+}
+
 function handleFileSelect(files) {
     if (!files || files.length === 0) return;
-    selectedFiles = Array.from(files);
+    const incoming = Array.from(files);
+    
+    // Đổ tệp mới vào mảng
+    incoming.forEach(f => selectedFiles.push(f));
+    renderFileList();
+}
 
-    const display = document.getElementById('fileNameDisplay');
+function renderFileList() {
+    const fileList = document.getElementById('fileList');
+    const btnEncrypt = document.getElementById('btnEncrypt');
+    if (!fileList) return;
+
+    fileList.innerHTML = '';
     let totalSize = selectedFiles.reduce((acc, f) => acc + f.size, 0);
-    const totalSizeMB = (totalSize / (1024 * 1024)).toFixed(2);
 
-    if (selectedFiles.length === 1) {
-        display.innerText = `${selectedFiles[0].name} (${totalSizeMB} MB)`;
+    selectedFiles.forEach((file, index) => {
+        const row = document.createElement('div');
+        row.className = 'file-row';
+        row.innerHTML = `
+            <div class="file-icon">${file.type.startsWith('image/') ? '▧' : '▤'}</div>
+            <div class="file-meta">
+                <div class="file-name">${file.name}</div>
+                <div class="file-size">${formatBytes(file.size)}</div>
+            </div>
+            <button class="remove" type="button" onclick="removeSelectedFile(${index})">Xóa</button>
+        `;
+        fileList.appendChild(row);
+    });
+
+    if (selectedFiles.length > 0) {
+        btnEncrypt.disabled = false;
+        btnEncrypt.textContent = `Tiếp tục gửi (${selectedFiles.length} tệp - ${formatBytes(totalSize)})`;
     } else {
-        display.innerText = `Đã chọn ${selectedFiles.length} tệp (Tổng: ${totalSizeMB} MB)`;
+        btnEncrypt.disabled = true;
+        btnEncrypt.textContent = 'Tiếp tục gửi tệp';
     }
+}
+
+function removeSelectedFile(index) {
+    selectedFiles.splice(index, 1);
+    renderFileList();
+}
+
+function clearSelectedFiles() {
+    selectedFiles = [];
+    renderFileList();
 }
 
 // Helpers Convert ArrayBuffer
@@ -174,9 +213,10 @@ function bufferToHex(buffer) {
 }
 
 function hexToBuffer(hexString) {
-    const bytes = new Uint8Array(Math.ceil(hexString.length / 2));
+    const cleanHex = hexString.replace(/[^0-9a-fA-F]/g, '');
+    const bytes = new Uint8Array(Math.ceil(cleanHex.length / 2));
     for (let i = 0; i < bytes.length; i++) {
-        bytes[i] = parseInt(hexString.substr(i * 2, 2), 16);
+        bytes[i] = parseInt(cleanHex.substr(i * 2, 2), 16);
     }
     return bytes;
 }
@@ -266,30 +306,26 @@ async function encryptAndUpload() {
 
         // Render Kết Quả
         resultBox.innerHTML = `
-            <div style="color: #4ade80; font-weight: 600; margin-bottom: 12px; font-size: 0.95rem;">Tải lên & Mã hóa thành công!</div>
+            <div style="color: #4ade80; font-weight: 700; margin-bottom: 12px; font-size: 0.95rem;">✅ Mã hóa & Tải lên thành công!</div>
             
-            <div style="margin-bottom: 10px; display: flex; align-items: center; flex-wrap: wrap; gap: 8px;">
-                <b>Mã Tệp (File ID):</b> 
-                <span class="code-pill blue">${fileId}</span>
-                <button class="btn-copy-box" onclick="copyToClipboard('${fileId}')">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                    Copy
-                </button>
-            </div>
-
-            <div style="margin-bottom: 12px;">
-                <div style="margin-bottom: 4px;"><b>Khóa Giải Mã (Secret Key):</b></div>
-                <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 8px;">
-                    <span class="code-pill red">${secretKeyHex}</span>
-                    <button class="btn-copy-box" onclick="copyToClipboard('${secretKeyHex}')">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                        Copy
-                    </button>
+            <div class="result-item">
+                <label>Mã Tệp (File ID):</label>
+                <div class="copy-group">
+                    <input type="text" value="${fileId}" readonly>
+                    <button class="btn-copy" onclick="copyToClipboard('${fileId}')">📋 Copy</button>
                 </div>
             </div>
 
-            <div style="color: #64748b; font-size: 0.8rem; border-top: 1px dashed #1e293b; padding-top: 8px; margin-top: 8px;">
-                ⏱️ <i>Lưu ý: Tệp của bạn tự động xóa khỏi hệ thống sau 24 giờ.</i>
+            <div class="result-item">
+                <label>Khóa Giải Mã (Secret Key):</label>
+                <div class="copy-group">
+                    <input type="text" class="red-text" value="${secretKeyHex}" readonly>
+                    <button class="btn-copy" onclick="copyToClipboard('${secretKeyHex}')">📋 Copy</button>
+                </div>
+            </div>
+
+            <div style="color: #9aa8c4; font-size: 0.8rem; border-top: 1px dashed #283650; padding-top: 8px; margin-top: 8px;">
+                ⏱️ <i>Lưu ý: Tệp của bạn sẽ tự động xóa khỏi hệ thống sau 24 giờ.</i>
             </div>
         `;
         resultBox.classList.remove('hidden');
@@ -298,10 +334,7 @@ async function encryptAndUpload() {
         showModal('Tải lên thất bại', err.message || 'Không thể tải tệp lên server!');
     } finally {
         btnEncrypt.disabled = false;
-        btnEncrypt.innerHTML = `
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-            <span>Mã Hóa & Gửi Tệp</span>
-        `;
+        btnEncrypt.textContent = `Tiếp tục gửi (${selectedFiles.length} tệp)`;
     }
 }
 
@@ -317,6 +350,12 @@ async function downloadAndDecrypt() {
         return;
     }
 
+    const cleanKeyHex = rawKeyHex.replace(/[^0-9a-fA-F]/g, '');
+    if (cleanKeyHex.length !== 64 && cleanKeyHex.length !== 32) {
+        showModal('Lỗi khóa giải mã', `Khóa AES-256 phải dài 64 ký tự Hex. Khóa bạn nhập dài ${cleanKeyHex.length} ký tự.`);
+        return;
+    }
+
     try {
         btnDecrypt.disabled = true;
         btnDecrypt.innerHTML = '<span>⏳ Đang tải tệp về...</span>';
@@ -327,7 +366,7 @@ async function downloadAndDecrypt() {
         
         if (!response.ok) {
             if (response.status === 404) {
-                throw new Error('Mã tệp không tồn tại hoặc đã bị xóa sau 24h (hoặc do server Render đi ngủ/restart làm mất file đĩa tạm)');
+                throw new Error('Mã tệp không tồn tại hoặc đã bị xóa sau 24h!');
             }
             throw new Error('Không thể kết nối tới server tải tệp!');
         }
@@ -341,7 +380,7 @@ async function downloadAndDecrypt() {
         const iv = bytes.slice(1 + nameLen, 1 + nameLen + 12);
         const ciphertext = bytes.slice(1 + nameLen + 12);
 
-        const rawKey = hexToBuffer(rawKeyHex);
+        const rawKey = hexToBuffer(cleanKeyHex);
         const cryptoKey = await window.crypto.subtle.importKey(
             'raw',
             rawKey,
@@ -367,19 +406,16 @@ async function downloadAndDecrypt() {
         a.remove();
         URL.revokeObjectURL(downloadUrl);
 
-        saveToReceiveHistory(rawFileId, rawKeyHex, fileName);
+        saveToReceiveHistory(rawFileId, cleanKeyHex, fileName);
 
-        resultBox.innerHTML = `<div style="color: #4ade80; font-weight: 600;">✅ Giải mã & Tải về thành công: <b>${fileName}</b></div>`;
+        resultBox.innerHTML = `<div style="color: #4ade80; font-weight: 600;">🎉 Giải mã & Tải về thành công: <b>${fileName}</b></div>`;
         resultBox.classList.remove('hidden');
 
     } catch (err) {
         showModal('Giải mã thất bại', err.message || 'Khóa giải mã không đúng hoặc tệp không còn tồn tại trên server!');
     } finally {
         btnDecrypt.disabled = false;
-        btnDecrypt.innerHTML = `
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
-            <span>Tải Về & Giải Mã</span>
-        `;
+        btnDecrypt.innerHTML = 'Tải Về & Giải Mã';
     }
 }
 
@@ -402,16 +438,16 @@ function loadLocalHistory() {
 
     const history = JSON.parse(localStorage.getItem('uploadHistory') || '[]');
     if (history.length === 0) {
-        container.innerHTML = `<p style="color: #64748b; font-size: 0.85rem; text-align: center; padding: 12px 0;">Bạn chưa gửi tệp nào trên thiết bị này.</p>`;
+        container.innerHTML = `<p style="color: #9aa8c4; font-size: 0.85rem; text-align: center; padding: 12px 0;">Bạn chưa gửi tệp nào trên thiết bị này.</p>`;
         return;
     }
 
     const NOW = Date.now();
 
     let html = `
-    <table style="width: 100%; font-size: 0.85rem; color: #f1f5f9; border-collapse: collapse;">
+    <table style="width: 100%; font-size: 0.85rem; color: #eef2ff; border-collapse: collapse;">
         <thead>
-            <tr style="text-align: left; color: #94a3b8; border-bottom: 1px solid #1e293b;">
+            <tr style="text-align: left; color: #9aa8c4; border-bottom: 1px solid #283650;">
                 <th style="padding: 10px 8px;">Mã Tệp (File ID)</th>
                 <th style="padding: 10px 8px;">Khóa Giải Mã</th>
                 <th style="padding: 10px 8px;">Thời Gian</th>
@@ -427,7 +463,7 @@ function loadLocalHistory() {
 
         const isExpired = item.timestamp ? (NOW - item.timestamp > EXPIRE_MS) : false;
         const statusText = isExpired 
-            ? '<span style="color: #ef4444; font-weight: 500;">🔴 Đã hết hạn</span>' 
+            ? '<span style="color: #fb7185; font-weight: 500;">🔴 Đã hết hạn</span>' 
             : '<span style="color: #4ade80; font-weight: 500;">🟢 Còn hạn</span>';
         const rowOpacity = isExpired ? 'opacity: 0.5;' : '';
 
@@ -438,24 +474,22 @@ function loadLocalHistory() {
         }
 
         html += `
-        <tr style="border-bottom: 1px solid #1e293b; ${rowOpacity}">
+        <tr style="border-bottom: 1px solid #17223a; ${rowOpacity}">
             <td style="padding: 10px 8px;">
                 <div class="badge-copy badge-blue" onclick="copyToClipboard('${item.fileId}')" title="Bấm để sao chép Mã Tệp">
-                    <span>${shortId}</span>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                    <span>${shortId}</span> 📋
                 </div>
             </td>
             <td style="padding: 10px 8px;">
                 <div class="badge-copy badge-red" onclick="copyToClipboard('${item.key}')" title="Bấm để sao chép Khóa Giải Mã">
-                    <span>${shortKey}</span>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                    <span>${shortKey}</span> 📋
                 </div>
             </td>
-            <td style="padding: 10px 8px; color: #94a3b8;">${timeFormatted}</td>
+            <td style="padding: 10px 8px; color: #9aa8c4;">${timeFormatted}</td>
             <td style="padding: 10px 8px;">${statusText}</td>
             <td style="padding: 10px 8px; text-align: center;">
                 <button class="btn-delete-item" onclick="deleteUploadHistoryItem(${index})" title="Xóa dòng này">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fb7185" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                 </button>
             </td>
         </tr>`;
@@ -465,7 +499,6 @@ function loadLocalHistory() {
     container.innerHTML = html;
 }
 
-// Xóa 1 dòng lịch sử gửi (Có hiện Popup xác nhận)
 function deleteUploadHistoryItem(index) {
     showModal(
         'Xác nhận xóa',
@@ -500,16 +533,16 @@ function loadReceiveHistory() {
 
     const history = JSON.parse(localStorage.getItem('receiveHistory') || '[]');
     if (history.length === 0) {
-        container.innerHTML = `<p style="color: #64748b; font-size: 0.85rem; text-align: center; padding: 12px 0;">Bạn chưa nhận tệp nào trên thiết bị này.</p>`;
+        container.innerHTML = `<p style="color: #9aa8c4; font-size: 0.85rem; text-align: center; padding: 12px 0;">Bạn chưa nhận tệp nào trên thiết bị này.</p>`;
         return;
     }
 
     const NOW = Date.now();
 
     let html = `
-    <table style="width: 100%; font-size: 0.85rem; color: #f1f5f9; border-collapse: collapse;">
+    <table style="width: 100%; font-size: 0.85rem; color: #eef2ff; border-collapse: collapse;">
         <thead>
-            <tr style="text-align: left; color: #94a3b8; border-bottom: 1px solid #1e293b;">
+            <tr style="text-align: left; color: #9aa8c4; border-bottom: 1px solid #283650;">
                 <th style="padding: 10px 8px;">Mã Tệp (File ID)</th>
                 <th style="padding: 10px 8px;">Khóa Giải Mã</th>
                 <th style="padding: 10px 8px;">Thời Gian</th>
@@ -525,7 +558,7 @@ function loadReceiveHistory() {
 
         const isExpired = item.timestamp ? (NOW - item.timestamp > EXPIRE_MS) : false;
         const statusText = isExpired 
-            ? '<span style="color: #ef4444; font-weight: 500;">🔴 Đã hết hạn</span>' 
+            ? '<span style="color: #fb7185; font-weight: 500;">🔴 Đã hết hạn</span>' 
             : '<span style="color: #4ade80; font-weight: 500;">🟢 Còn hạn</span>';
         const rowOpacity = isExpired ? 'opacity: 0.5;' : '';
 
@@ -536,24 +569,22 @@ function loadReceiveHistory() {
         }
 
         html += `
-        <tr style="border-bottom: 1px solid #1e293b; ${rowOpacity}">
+        <tr style="border-bottom: 1px solid #17223a; ${rowOpacity}">
             <td style="padding: 10px 8px;">
                 <div class="badge-copy badge-blue" onclick="copyToClipboard('${item.fileId}')" title="Bấm để sao chép Mã Tệp">
-                    <span>${shortId}</span>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                    <span>${shortId}</span> 📋
                 </div>
             </td>
             <td style="padding: 10px 8px;">
                 <div class="badge-copy badge-red" onclick="copyToClipboard('${item.key}')" title="Bấm để sao chép Khóa Giải Mã">
-                    <span>${shortKey}</span>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                    <span>${shortKey}</span> 📋
                 </div>
             </td>
-            <td style="padding: 10px 8px; color: #94a3b8;">${timeFormatted}</td>
+            <td style="padding: 10px 8px; color: #9aa8c4;">${timeFormatted}</td>
             <td style="padding: 10px 8px;">${statusText}</td>
             <td style="padding: 10px 8px; text-align: center;">
                 <button class="btn-delete-item" onclick="deleteReceiveHistoryItem(${index})" title="Xóa dòng này">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fb7185" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                 </button>
             </td>
         </tr>`;
@@ -563,7 +594,6 @@ function loadReceiveHistory() {
     container.innerHTML = html;
 }
 
-// Xóa 1 dòng lịch sử nhận (Có hiện Popup xác nhận)
 function deleteReceiveHistoryItem(index) {
     showModal(
         'Xác nhận xóa',
@@ -575,6 +605,26 @@ function deleteReceiveHistoryItem(index) {
             localStorage.setItem('receiveHistory', JSON.stringify(history));
             loadReceiveHistory();
             showToast('🗑️ Đã xóa dòng lịch sử!');
+        }
+    );
+}
+
+function refreshHistory(type, btnElement) {
+    const titleName = type === 'upload' ? 'Lịch sử đã gửi' : 'Lịch sử đã nhận';
+
+    showModal(
+        'Xác nhận Làm mới',
+        `Bạn có chắc chắn muốn làm mới và XÓA TOÀN BỘ danh sách trong "${titleName}" trên trình duyệt này không?`,
+        true,
+        () => {
+            if (type === 'upload') {
+                localStorage.removeItem('uploadHistory');
+                loadLocalHistory();
+            } else {
+                localStorage.removeItem('receiveHistory');
+                loadReceiveHistory();
+            }
+            showToast('🔄 Đã xóa toàn bộ lịch sử thành công!');
         }
     );
 }
