@@ -36,7 +36,7 @@ function autoCleanupExpiredFiles() {
             fs.stat(filePath, (err, stats) => {
                 if (err) return;
 
-                // Nếu thời gian sửa đổi (mtime) cũ hơn 24 giờ thì xóa
+                // Nếu thời gian sửa đổi cũ hơn 24 giờ thì xóa
                 if (now - stats.mtimeMs > FILE_MAX_AGE_MS) {
                     fs.unlink(filePath, unlinkErr => {
                         if (!unlinkErr) {
