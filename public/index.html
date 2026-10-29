@@ -1,282 +1,269 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Nhóm 6 — Chia sẻ tệp an toàn E2EE</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-  <style>
-    :root {
-      color-scheme: dark;
-      --bg: #0b1020;
-      --panel: #121a2d;
-      --panel-2: #17223a;
-      --border: #283650;
-      --text: #eef2ff;
-      --muted: #9aa8c4;
-      --accent: #8174ff;
-      --accent-2: #5b50e8;
-      --green: #4ade80;
-      --red: #fb7185;
-      --radius: 18px;
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      min-height: 100vh;
-      background: radial-gradient(ellipse at top, #182044 0, var(--bg) 48%);
-      color: var(--text);
-      font-family: Inter, "Segoe UI", system-ui, -apple-system, sans-serif;
-      line-height: 1.5;
-    }
-    button, input { font: inherit; }
-    button { cursor: pointer; }
-    button:focus-visible, input:focus-visible, .dropzone:focus-visible {
-      outline: 3px solid #b5adff;
-      outline-offset: 3px;
-    }
-    .shell { width: min(980px, calc(100% - 32px)); margin: 0 auto; padding: 28px 0 48px; }
-    header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 36px; }
-    .brand { display: flex; align-items: center; gap: 12px; }
-    .brand-mark {
-      display: grid; place-items: center; width: 44px; height: 44px; border-radius: 14px;
-      color: white; background: linear-gradient(145deg, #968cff, #5546db);
-      box-shadow: 0 8px 28px #5b50e833;
-    }
-    .brand h1 { margin: 0; font-size: 20px; letter-spacing: -.5px; }
-    .brand p { margin: 1px 0 0; color: var(--muted); font-size: 12px; }
-    .secure-pill { display: flex; align-items: center; gap: 7px; border: 1px solid #2d4560; border-radius: 999px; padding: 8px 12px; color: #a8f0c1; font-size: 12px; white-space: nowrap; }
-    .hero { text-align: center; margin-bottom: 26px; }
-    .eyebrow { color: #b8b0ff; font-size: 12px; font-weight: 700; letter-spacing: 1.6px; text-transform: uppercase; }
-    .hero h2 { font-size: clamp(28px, 5vw, 42px); line-height: 1.12; letter-spacing: -1.4px; margin: 10px 0 12px; }
-    .hero p { color: var(--muted); max-width: 570px; margin: 0 auto; }
-    .card { background: linear-gradient(180deg, #151e33f5, #11192af5); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: 0 24px 80px #0003; overflow: hidden; margin-bottom: 24px; }
-    .tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 10px; border-bottom: 1px solid var(--border); background: #0d1527; }
-    .tab { display: flex; justify-content: center; align-items: center; gap: 9px; border: 1px solid transparent; border-radius: 12px; background: transparent; color: var(--muted); padding: 13px; font-weight: 650; transition: .18s ease; }
-    .tab.active { color: white; background: #29264e; border-color: #5146a5; }
-    .tab:hover { color: white; }
-    .panel { padding: clamp(18px, 4vw, 30px); }
-    .panel h3 { margin: 0 0 5px; font-size: 19px; }
-    .subtext { margin: 0 0 20px; color: var(--muted); font-size: 14px; }
-    .dropzone {
-      display: flex; min-height: 200px; padding: 26px 18px; flex-direction: column; align-items: center; justify-content: center;
-      text-align: center; border: 1.5px dashed #5b5a99; border-radius: 16px;
-      background: linear-gradient(145deg, #25234b55, #151e32aa); transition: .18s ease; cursor: pointer;
-    }
-    .dropzone:hover, .dropzone.dragover { border-color: #aaa2ff; background: #27245180; transform: translateY(-1px); }
-    .upload-icon { width: 58px; height: 58px; display: grid; place-items: center; border-radius: 18px; background: #8174ff20; color: #b9b2ff; font-size: 29px; margin-bottom: 14px; }
-    .dropzone strong { font-size: 16px; }
-    .dropzone .hint { color: var(--muted); margin-top: 5px; font-size: 13px; }
-    .browse { margin-top: 15px; border: 1px solid #8174ff; background: #6d5df2; color: white; border-radius: 10px; padding: 10px 17px; font-weight: 650; }
-    .browse:hover, .primary:hover { background: #786afc; }
-    .fineprint { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 18px; color: var(--muted); font-size: 12px; margin-top: 13px; }
-    .file-list { display: grid; gap: 9px; margin-top: 17px; }
-    .file-row { display: flex; align-items: center; gap: 12px; min-width: 0; padding: 12px; background: #0e1729; border: 1px solid var(--border); border-radius: 12px; }
-    .file-icon { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 10px; background: #26264d; font-size: 19px; flex-shrink: 0; }
-    .file-meta { flex: 1; min-width: 0; }
-    .file-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; font-weight: 650; }
-    .file-size { color: var(--muted); font-size: 12px; }
-    .remove { border: 0; color: #aeb9d0; background: transparent; border-radius: 8px; padding: 7px 10px; }
-    .remove:hover { color: white; background: #3a2036; }
-    .actions { margin-top: 20px; display: flex; gap: 12px; align-items: center; }
-    .primary, .secondary { border-radius: 11px; padding: 12px 17px; font-weight: 700; transition: .18s ease; }
-    .primary { color: white; border: 1px solid #8174ff; background: #6d5df2; flex: 1; }
-    .primary:disabled { cursor: not-allowed; opacity: .45; }
-    .secondary { color: #d6d9f5; border: 1px solid var(--border); background: #17223a; }
-    .secondary:hover { border-color: #69759a; }
-    
-    /* Căn giữa nút Tải Về & Giải Mã */
-    #btnDecrypt {
-      display: block;
-      margin: 0 auto;
-      width: 100%;
-      max-width: 320px;
-    }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nhóm 6 — Chia sẻ tệp an toàn E2EE</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0b1020;
+      --panel: #121a2d;
+      --panel-2: #17223a;
+      --border: #283650;
+      --text: #eef2ff;
+      --muted: #9aa8c4;
+      --accent: #8174ff;
+      --accent-2: #5b50e8;
+      --green: #4ade80;
+      --red: #fb7185;
+      --radius: 18px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: radial-gradient(ellipse at top, #182044 0, var(--bg) 48%);
+      color: var(--text);
+      font-family: Inter, "Segoe UI", system-ui, -apple-system, sans-serif;
+      line-height: 1.5;
+    }
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+    button:focus-visible, input:focus-visible, .dropzone:focus-visible {
+      outline: 3px solid #b5adff;
+      outline-offset: 3px;
+    }
+    .shell { width: min(980px, calc(100% - 32px)); margin: 0 auto; padding: 28px 0 48px; }
+    header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 36px; }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand-mark {
+      display: grid; place-items: center; width: 44px; height: 44px; border-radius: 14px;
+      color: white; background: linear-gradient(145deg, #968cff, #5546db); font-size: 23px;
+      box-shadow: 0 8px 28px #5b50e833;
+    }
+    .brand h1 { margin: 0; font-size: 20px; letter-spacing: -.5px; }
+    .brand p { margin: 1px 0 0; color: var(--muted); font-size: 12px; }
+    .secure-pill { display: flex; align-items: center; gap: 7px; border: 1px solid #2d4560; border-radius: 999px; padding: 8px 12px; color: #a8f0c1; font-size: 12px; white-space: nowrap; }
+    .hero { text-align: center; margin-bottom: 26px; }
+    .eyebrow { color: #b8b0ff; font-size: 12px; font-weight: 700; letter-spacing: 1.6px; text-transform: uppercase; }
+    .hero h2 { font-size: clamp(28px, 5vw, 42px); line-height: 1.12; letter-spacing: -1.4px; margin: 10px 0 12px; }
+    .hero p { color: var(--muted); max-width: 570px; margin: 0 auto; }
+    .card { background: linear-gradient(180deg, #151e33f5, #11192af5); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: 0 24px 80px #0003; overflow: hidden; margin-bottom: 24px; }
+    .tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 10px; border-bottom: 1px solid var(--border); background: #0d1527; }
+    .tab { display: flex; justify-content: center; align-items: center; gap: 9px; border: 1px solid transparent; border-radius: 12px; background: transparent; color: var(--muted); padding: 13px; font-weight: 650; transition: .18s ease; }
+    .tab.active { color: white; background: #29264e; border-color: #5146a5; }
+    .tab:hover { color: white; }
+    .panel { padding: clamp(18px, 4vw, 30px); }
+    .panel h3 { margin: 0 0 5px; font-size: 19px; }
+    .subtext { margin: 0 0 20px; color: var(--muted); font-size: 14px; }
+    .dropzone {
+      display: flex; min-height: 200px; padding: 26px 18px; flex-direction: column; align-items: center; justify-content: center;
+      text-align: center; border: 1.5px dashed #5b5a99; border-radius: 16px;
+      background: linear-gradient(145deg, #25234b55, #151e32aa); transition: .18s ease; cursor: pointer;
+    }
+    .dropzone:hover, .dropzone.dragover { border-color: #aaa2ff; background: #27245180; transform: translateY(-1px); }
+    .upload-icon { width: 58px; height: 58px; display: grid; place-items: center; border-radius: 18px; background: #8174ff20; color: #b9b2ff; font-size: 29px; margin-bottom: 14px; }
+    .dropzone strong { font-size: 16px; }
+    .dropzone .hint { color: var(--muted); margin-top: 5px; font-size: 13px; }
+    .browse { margin-top: 15px; border: 1px solid #8174ff; background: #6d5df2; color: white; border-radius: 10px; padding: 10px 17px; font-weight: 650; }
+    .browse:hover, .primary:hover { background: #786afc; }
+    .fineprint { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 18px; color: var(--muted); font-size: 12px; margin-top: 13px; }
+    .file-list { display: grid; gap: 9px; margin-top: 17px; }
+    .file-row { display: flex; align-items: center; gap: 12px; min-width: 0; padding: 12px; background: #0e1729; border: 1px solid var(--border); border-radius: 12px; }
+    .file-icon { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 10px; background: #26264d; font-size: 19px; flex-shrink: 0; }
+    .file-meta { flex: 1; min-width: 0; }
+    .file-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; font-weight: 650; }
+    .file-size { color: var(--muted); font-size: 12px; }
+    .remove { border: 0; color: #aeb9d0; background: transparent; border-radius: 8px; padding: 7px 10px; }
+    .remove:hover { color: white; background: #3a2036; }
+    .actions { margin-top: 20px; display: flex; gap: 12px; align-items: center; }
+    .primary, .secondary { border-radius: 11px; padding: 12px 17px; font-weight: 700; transition: .18s ease; }
+    .primary { color: white; border: 1px solid #8174ff; background: #6d5df2; flex: 1; }
+    .primary:disabled { cursor: not-allowed; opacity: .45; }
+    .secondary { color: #d6d9f5; border: 1px solid var(--border); background: #17223a; }
+    .secondary:hover { border-color: #69759a; }
+    
+    /* Căn giữa nút Tải Về & Giải Mã */
+    #btnDecrypt {
+      display: block;
+      margin: 0 auto;
+      width: 100%;
+      max-width: 320px;
+    }
 
-    /* Result Box */
-    .result-box { margin-top: 20px; border-radius: 14px; border: 1px solid var(--border); background: #0c1424; padding: 18px; text-align: left; }
-    .result-item { margin-bottom: 12px; }
-    .result-item label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; font-weight: 600; }
-    .copy-group { display: flex; gap: 8px; align-items: center; }
-    .copy-group input { flex: 1; border: 1px solid #35425c; background: #131d31; color: #818cf8; border-radius: 8px; padding: 8px 12px; font-family: monospace; font-size: 13px; }
-    .copy-group input.red-text { color: #f43f5e; }
-    .btn-copy { border: 1px solid var(--border); background: #17223a; color: white; border-radius: 8px; padding: 8px 12px; font-size: 12px; font-weight: 600; }
-    .btn-copy:hover { background: #283650; }
+    /* Result Box */
+    .result-box { margin-top: 20px; border-radius: 14px; border: 1px solid var(--border); background: #0c1424; padding: 18px; text-align: left; }
+    .result-item { margin-bottom: 12px; }
+    .result-item label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; font-weight: 600; }
+    .copy-group { display: flex; gap: 8px; align-items: center; }
+    .copy-group input { flex: 1; border: 1px solid #35425c; background: #131d31; color: #818cf8; border-radius: 8px; padding: 8px 12px; font-family: monospace; font-size: 13px; }
+    .copy-group input.red-text { color: #f43f5e; }
+    .btn-copy { border: 1px solid var(--border); background: #17223a; color: white; border-radius: 8px; padding: 8px 12px; font-size: 12px; font-weight: 600; }
+    .btn-copy:hover { background: #283650; }
 
-    /* Form Fields */
-    .field { margin-bottom: 17px; text-align: left; }
-    .field label { display: block; margin-bottom: 7px; font-size: 13px; font-weight: 650; }
-    .field input { width: 100%; border: 1px solid #35425c; background: #0c1424; color: white; border-radius: 11px; padding: 13px 14px; }
-    .field input::placeholder { color: #66748f; }
-    .field input:focus { border-color: #8174ff; outline: 3px solid #8174ff25; }
-    .field-note { color: var(--muted); font-size: 12px; margin-top: 6px; }
-    .input-wrap { display: flex; gap: 8px; }
-    .input-wrap input { min-width: 0; flex: 1; }
+    /* Form Fields */
+    .field { margin-bottom: 17px; text-align: left; }
+    .field label { display: block; margin-bottom: 7px; font-size: 13px; font-weight: 650; }
+    .field input { width: 100%; border: 1px solid #35425c; background: #0c1424; color: white; border-radius: 11px; padding: 13px 14px; }
+    .field input::placeholder { color: #66748f; }
+    .field input:focus { border-color: #8174ff; outline: 3px solid #8174ff25; }
+    .field-note { color: var(--muted); font-size: 12px; margin-top: 6px; }
+    .input-wrap { display: flex; gap: 8px; }
+    .input-wrap input { min-width: 0; flex: 1; }
 
-    /* History Card */
-    .history-card { background: linear-gradient(180deg, #151e33f5, #11192af5); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; text-align: left; margin-bottom: 20px; }
-    .history-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-    .history-title { font-size: 15px; font-weight: 700; color: white; display: flex; align-items: center; gap: 8px; }
-    .btn-refresh { background: #17223a; color: #cbd5e1; border: 1px solid var(--border); padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
-    .btn-refresh:hover { background: #311a28; color: var(--red); border-color: var(--red); }
-    .badge-copy { display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; border-radius: 6px; font-family: monospace; font-size: 0.83rem; cursor: pointer; user-select: none; }
-    .badge-blue { background-color: rgba(99, 102, 241, 0.15); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.25); }
-    .badge-blue:hover { background-color: rgba(99, 102, 241, 0.3); }
-    .badge-red { background-color: rgba(244, 63, 94, 0.15); color: #f43f5e; border: 1px solid rgba(244, 63, 94, 0.25); }
-    .badge-red:hover { background-color: rgba(244, 63, 94, 0.3); }
-    .btn-delete-item { background: transparent; border: none; cursor: pointer; padding: 4px; border-radius: 4px; }
-    .btn-delete-item:hover { background-color: rgba(239, 68, 68, 0.2); }
+    /* History Card */
+    .history-card { background: linear-gradient(180deg, #151e33f5, #11192af5); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; text-align: left; margin-bottom: 20px; }
+    .history-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .history-title { font-size: 15px; font-weight: 700; color: white; display: flex; align-items: center; gap: 8px; }
+    .btn-refresh { background: #17223a; color: #cbd5e1; border: 1px solid var(--border); padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+    .btn-refresh:hover { background: #311a28; color: var(--red); border-color: var(--red); }
+    .badge-copy { display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; border-radius: 6px; font-family: monospace; font-size: 0.83rem; cursor: pointer; user-select: none; }
+    .badge-blue { background-color: rgba(99, 102, 241, 0.15); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.25); }
+    .badge-blue:hover { background-color: rgba(99, 102, 241, 0.3); }
+    .badge-red { background-color: rgba(244, 63, 94, 0.15); color: #f43f5e; border: 1px solid rgba(244, 63, 94, 0.25); }
+    .badge-red:hover { background-color: rgba(244, 63, 94, 0.3); }
+    .btn-delete-item { background: transparent; border: none; cursor: pointer; padding: 4px; border-radius: 4px; }
+    .btn-delete-item:hover { background-color: rgba(239, 68, 68, 0.2); }
 
-    /* Toast Notification */
-    .toast { position: fixed; bottom: 24px; right: 24px; background: #121a2d; color: #f1f5f9; border: 1px solid #8174ff; padding: 12px 20px; border-radius: 10px; font-size: 0.88rem; box-shadow: 0 10px 25px rgba(0,0,0,0.5); z-index: 10000; }
+    /* Toast Notification */
+    .toast { position: fixed; bottom: 24px; right: 24px; background: #121a2d; color: #f1f5f9; border: 1px solid #8174ff; padding: 12px 20px; border-radius: 10px; font-size: 0.88rem; box-shadow: 0 10px 25px rgba(0,0,0,0.5); z-index: 10000; }
 
-    /* Custom Modal Overlay */
-    .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 9999; }
-    .modal-card { background: #121a2d; border: 1px solid var(--border); border-radius: 16px; padding: 24px; width: 90%; max-width: 420px; text-align: center; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5); }
-    .modal-title { font-size: 1.15rem; font-weight: 700; color: #f1f5f9; margin-bottom: 10px; }
-    .modal-message { font-size: 0.9rem; color: var(--muted); margin-bottom: 20px; line-height: 1.5; }
-    .modal-actions { display: flex; gap: 10px; justify-content: center; }
-    .btn-modal-cancel { flex: 1; padding: 10px; background: #17223a; color: #cbd5e1; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-weight: 600; }
-    .btn-modal-confirm { flex: 1; padding: 10px; background: #ef4444; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; }
-    .btn-modal-confirm.info { background: #6d5df2; }
+    /* Custom Modal Overlay */
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 9999; }
+    .modal-card { background: #121a2d; border: 1px solid var(--border); border-radius: 16px; padding: 24px; width: 90%; max-width: 420px; text-align: center; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5); }
+    .modal-title { font-size: 1.15rem; font-weight: 700; color: #f1f5f9; margin-bottom: 10px; }
+    .modal-message { font-size: 0.9rem; color: var(--muted); margin-bottom: 20px; line-height: 1.5; }
+    .modal-actions { display: flex; gap: 10px; justify-content: center; }
+    .btn-modal-cancel { flex: 1; padding: 10px; background: #17223a; color: #cbd5e1; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-weight: 600; }
+    .btn-modal-confirm { flex: 1; padding: 10px; background: #ef4444; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; }
+    .btn-modal-confirm.info { background: #6d5df2; }
 
-    footer { display: flex; flex-wrap: wrap; justify-content: center; gap: 9px 20px; color: #7f8ba7; font-size: 12px; margin-top: 36px; }
-    .status-dot { color: #4ade80; font-weight: bold; margin-right: 3px; }
-    .hidden { display: none !important; }
+    footer { display: flex; flex-wrap: wrap; justify-content: center; gap: 9px 20px; color: #7f8ba7; font-size: 12px; margin-top: 36px; }
+    .hidden { display: none !important; }
 
-    @media (max-width: 560px) {
-      .shell { width: min(100% - 20px, 980px); padding-top: 16px; }
-      header { margin-bottom: 28px; }
-      .actions { flex-direction: column; align-items: stretch; }
-      .actions button { width: 100%; }
-    }
-  </style>
+    @media (max-width: 560px) {
+      .shell { width: min(100% - 20px, 980px); padding-top: 16px; }
+      header { margin-bottom: 28px; }
+      .actions { flex-direction: column; align-items: stretch; }
+      .actions button { width: 100%; }
+    }
+  </style>
 </head>
 <body>
-  <div class="shell">
-    <header>
-      <div class="brand">
-        <div class="brand-mark" aria-hidden="true">
-          <!-- Biểu tượng ổ khóa mã hóa dữ liệu -->
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-          </svg>
-        </div>
-        <div><h1>Nhóm 6</h1><p>Chia sẻ tệp riêng tư mã hóa E2EE</p></div>
-      </div>
-      <div class="secure-pill"><span aria-hidden="true">🔒</span> Bảo mật đầu cuối</div>
-    </header>
+  <div class="shell">
+    <header>
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true"> N6 </div>
+        <div><h1>Nhóm 6</h1><p>Chia sẻ tệp riêng tư mã hóa E2EE</p></div>
+      </div>
+      <div class="secure-pill"><span aria-hidden="true">🔒</span> Bảo mật đầu cuối</div>
+    </header>
 
-    <section class="hero">
-      <div class="eyebrow">Chia sẻ đơn giản hơn</div>
-      <h2>Gửi Dữ Liệu An Toàn</h2>
-      <p>Tệp tin của bạn được mã hóa trực tiếp trên trình duyệt trước khi tải lên. Hệ thống tự động xóa tệp sau 24 giờ.</p>
-    </section>
+    <section class="hero">
+      <div class="eyebrow">Chia sẻ đơn giản hơn</div>
+      <h2>Gửi Dữ Liệu An Toàn</h2>
+      <p>Tệp tin của bạn được mã hóa trực tiếp trên trình duyệt trước khi tải lên. Hệ thống tự động xóa tệp sau 24 giờ.</p>
+    </section>
 
-    <main class="card">
-      <div class="tabs" role="tablist">
-        <button class="tab active" id="tabUploadBtn" onclick="switchTab('upload')">↑ <span>Gửi tệp</span></button>
-        <button class="tab" id="tabDownloadBtn" onclick="switchTab('download')">↓ <span>Nhận tệp</span></button>
-      </div>
+    <main class="card">
+      <div class="tabs" role="tablist">
+        <button class="tab active" id="tabUploadBtn" onclick="switchTab('upload')">↑ <span>Gửi tệp</span></button>
+        <button class="tab" id="tabDownloadBtn" onclick="switchTab('download')">↓ <span>Nhận tệp</span></button>
+      </div>
 
-      <!-- TAB GỬI TỆP -->
-      <section class="panel" id="uploadSection">
-        <h3>Chọn tệp muốn gửi</h3>
-        <p class="subtext">Kéo thả tệp vào khung hoặc chọn từ thiết bị của bạn.</p>
+      <!-- TAB GỬI TỆP -->
+      <section class="panel" id="uploadSection">
+        <h3>Chọn tệp muốn gửi</h3>
+        <p class="subtext">Kéo thả tệp vào khung hoặc chọn từ thiết bị của bạn.</p>
 
-        <input id="fileInput" type="file" multiple class="hidden" onchange="handleFileSelect(this.files)" />
-        <div class="dropzone" id="dropZone" onclick="document.getElementById('fileInput').click()">
-          <div class="upload-icon" aria-hidden="true">⇧</div>
-          <strong>Kéo thả tệp vào đây</strong>
-          <div class="hint">Hoặc chọn tệp từ máy tính của bạn</div>
-          <button class="browse" id="browseButton" type="button" onclick="event.stopPropagation(); document.getElementById('fileInput').click()">＋ Chọn tệp</button>
-        </div>
-        <div class="fineprint"><span>✓ Hỗ trợ nén nhiều tệp</span><span>•</span><span>Giới hạn tối đa 100 MB</span></div>
-        
-        <div class="file-list" id="fileList"></div>
-        <div id="fileNameDisplay" style="display:none;"></div>
+        <input id="fileInput" type="file" multiple class="hidden" onchange="handleFileSelect(this.files)" />
+        <div class="dropzone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+          <div class="upload-icon" aria-hidden="true">⇧</div>
+          <strong>Kéo thả tệp vào đây</strong>
+          <div class="hint">Hoặc chọn tệp từ máy tính của bạn</div>
+          <button class="browse" id="browseButton" type="button" onclick="event.stopPropagation(); document.getElementById('fileInput').click()">＋ Chọn tệp</button>
+        </div>
+        <div class="fineprint"><span>✓ Hỗ trợ nén nhiều tệp</span><span>•</span><span>Giới hạn tối đa 100 MB</span></div>
+        
+        <div class="file-list" id="fileList"></div>
+        <div id="fileNameDisplay" style="display:none;"></div>
 
-        <div class="actions">
-          <button class="primary" id="btnEncrypt" onclick="encryptAndUpload()" disabled>Tiếp tục gửi tệp</button>
-          <button class="secondary" type="button" onclick="clearSelectedFiles()">Xóa lựa chọn</button>
-        </div>
+        <div class="actions">
+          <button class="primary" id="btnEncrypt" onclick="encryptAndUpload()" disabled>Tiếp tục gửi tệp</button>
+          <button class="secondary" type="button" onclick="clearSelectedFiles()">Xóa lựa chọn</button>
+        </div>
 
-        <div id="uploadResult" class="result-box hidden"></div>
-      </section>
+        <div id="uploadResult" class="result-box hidden"></div>
+      </section>
 
-      <!-- TAB NHẬN TỆP -->
-      <section class="panel hidden" id="downloadSection">
-        <h3>Nhận tệp được chia sẻ</h3>
-        <p class="subtext">Nhập thông tin người gửi cung cấp cho bạn.</p>
-        
-        <div class="field">
-          <label for="fileIdInput">1. Mã tệp (File ID)</label>
-          <input id="fileIdInput" autocomplete="off" placeholder="Ví dụ: 6facc98e0e8cee59" />
-          <div class="field-note">Mã dùng để tìm tệp được chia sẻ trên server.</div>
-        </div>
-        <div class="field">
-          <label for="keyInput">2. Khóa giải mã (Secret Key)</label>
-          <div class="input-wrap">
-            <input id="keyInput" autocomplete="off" placeholder="Dán khóa giải mã AES 64 ký tự tại đây" />
-            <button class="secondary" id="toggleKey" type="button" onclick="toggleKeyVisibility()">Hiện</button>
-          </div>
-          <div class="field-note">Khóa giải mã chỉ người gửi và bạn nắm giữ.</div>
-        </div>
+      <!-- TAB NHẬN TỆP -->
+      <section class="panel hidden" id="downloadSection">
+        <h3>Nhận tệp được chia sẻ</h3>
+        <p class="subtext">Nhập thông tin người gửi cung cấp cho bạn.</p>
+        
+        <div class="field">
+          <label for="fileIdInput">1. Mã tệp (File ID)</label>
+          <input id="fileIdInput" autocomplete="off" placeholder="Ví dụ: 6facc98e0e8cee59" />
+          <div class="field-note">Mã dùng để tìm tệp được chia sẻ trên server.</div>
+        </div>
+        <div class="field">
+          <label for="keyInput">2. Khóa giải mã (Secret Key)</label>
+          <div class="input-wrap">
+            <input id="keyInput" autocomplete="off" placeholder="Dán khóa giải mã AES 64 ký tự tại đây" />
+            <button class="secondary" id="toggleKey" type="button" onclick="toggleKeyVisibility()">Hiện</button>
+          </div>
+          <div class="field-note">Khóa giải mã chỉ người gửi và bạn nắm giữ.</div>
+        </div>
 
-        <button class="primary" id="btnDecrypt" onclick="downloadAndDecrypt()">Tải Về & Giải Mã</button>
+        <button class="primary" id="btnDecrypt" onclick="downloadAndDecrypt()">Tải Về & Giải Mã</button>
 
-        <div id="downloadResult" class="result-box hidden"></div>
-      </section>
-    </main>
+        <div id="downloadResult" class="result-box hidden"></div>
+      </section>
+    </main>
 
-    <!-- BẢNG LỊCH SỬ -->
-    <div id="uploadHistoryCard" class="history-card">
-      <div class="history-header">
-        <div class="history-title">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8174ff" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>
-          <span>Lịch Sử Đã Gửi (Trên Máy Này)</span>
-        </div>
-        <button class="btn-refresh" onclick="refreshHistory('upload', this)">Làm mới & Reset</button>
-      </div>
-      <div id="historyTableContainer"></div>
-    </div>
+    <!-- BẢNG LỊCH SỬ -->
+    <div id="uploadHistoryCard" class="history-card">
+      <div class="history-header">
+        <div class="history-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8174ff" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>
+          <span>Lịch Sử Đã Gửi (Trên Máy Này)</span>
+        </div>
+        <button class="btn-refresh" onclick="refreshHistory('upload', this)">Làm mới & Reset</button>
+      </div>
+      <div id="historyTableContainer"></div>
+    </div>
 
-    <div id="receiveHistoryCard" class="history-card hidden">
-      <div class="history-header">
-        <div class="history-title">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8174ff" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>
-          <span>Lịch Sử Đã Nhận (Trên Máy Này)</span>
-        </div>
-        <button class="btn-refresh" onclick="refreshHistory('receive', this)">Làm mới & Reset</button>
-      </div>
-      <div id="receiveHistoryTableContainer"></div>
-    </div>
+    <div id="receiveHistoryCard" class="history-card hidden">
+      <div class="history-header">
+        <div class="history-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8174ff" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>
+          <span>Lịch Sử Đã Nhận (Trên Máy Này)</span>
+        </div>
+        <button class="btn-refresh" onclick="refreshHistory('receive', this)">Làm mới & Reset</button>
+      </div>
+      <div id="receiveHistoryTableContainer"></div>
+    </div>
 
-    <footer>
-      <span><span class="status-dot">●</span> Trạng thái: Đã mã hóa E2EE</span>
-      <span>•</span>
-      <span>Máy chủ mù (Zero-Knowledge)</span>
-      <span>•</span>
-      <span>Tự động dọn dẹp: Bật (24h)</span>
-    </footer>
-  </div>
+    <footer><span> SecureShare E2EE</span><span>•</span><span>Tự động hủy tệp sau 24h</span><span>•</span><span>Responsive</span></footer>
+  </div>
 
-  <div id="toast" class="toast hidden">
-    <span id="toastMsg">Thông báo</span>
-  </div>
+  <div id="toast" class="toast hidden">
+    <span id="toastMsg">Thông báo</span>
+  </div>
 
-  <div id="customModal" class="modal-overlay hidden">
-    <div class="modal-card">
-      <div id="modalTitle" class="modal-title">Xác nhận</div>
-      <div id="modalMessage" class="modal-message">Nội dung...</div>
-      <div class="modal-actions">
-        <button id="modalCancelBtn" class="btn-modal-cancel" onclick="closeModal()">Hủy</button>
-        <button id="modalConfirmBtn" class="btn-modal-confirm">Đồng ý</button>
-      </div>
-    </div>
-  </div>
+  <div id="customModal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div id="modalTitle" class="modal-title">Xác nhận</div>
+      <div id="modalMessage" class="modal-message">Nội dung...</div>
+      <div class="modal-actions">
+        <button id="modalCancelBtn" class="btn-modal-cancel" onclick="closeModal()">Hủy</button>
+        <button id="modalConfirmBtn" class="btn-modal-confirm">Đồng ý</button>
+      </div>
+    </div>
+  </div>
 
-  <script src="app.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
