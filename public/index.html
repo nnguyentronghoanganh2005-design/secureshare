@@ -141,6 +141,7 @@
     .btn-modal-confirm.info { background: #6d5df2; }
 
     footer { display: flex; flex-wrap: wrap; justify-content: center; gap: 9px 20px; color: #7f8ba7; font-size: 12px; margin-top: 36px; }
+    .status-dot { color: #4ade80; font-weight: bold; margin-right: 3px; }
     .hidden { display: none !important; }
 
     @media (max-width: 560px) {
@@ -246,7 +247,13 @@
       <div id="receiveHistoryTableContainer"></div>
     </div>
 
-    <footer><span>⌁ SecureShare E2EE</span><span>•</span><span>Tự động hủy tệp sau 24h</span><span>•</span><span>Responsive</span></footer>
+    <footer>
+      <span><span class="status-dot">●</span> Trạng thái: Đã mã hóa E2EE</span>
+      <span>•</span>
+      <span>Máy chủ mù (Zero-Knowledge)</span>
+      <span>•</span>
+      <span>Tự động dọn dẹp: Bật (24h)</span>
+    </footer>
   </div>
 
   <div id="toast" class="toast hidden">
