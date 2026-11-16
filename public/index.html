@@ -113,8 +113,6 @@
     .primary:disabled { cursor: not-allowed; opacity: .45; }
     .secondary { color: #d6d9f5; border: 1px solid var(--border); background: #17223a; text-align: center; }
     .secondary:hover { border-color: #69759a; }
-    
-    #btnDecrypt { display: block; margin: 0 auto; width: 100%; }
 
     /* Result Box */
     .result-box { margin-top: 18px; border-radius: 14px; border: 1px solid var(--border); background: #0c1424; padding: 14px; text-align: left; overflow: hidden; width: 100%; }
@@ -136,7 +134,7 @@
     .input-wrap { display: flex; gap: 8px; width: 100%; min-width: 0; }
     .input-wrap input { min-width: 0; flex: 1; }
 
-    /* History Card - ĐÃ CẬP NHẬT CÂN ĐỐI NÚT LÀM MỚI TRÊN MOBILE */
+    /* History Card */
     .history-card { background: linear-gradient(180deg, #151e33f5, #11192af5); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; text-align: left; margin-bottom: 20px; width: 100%; overflow: hidden; }
     .history-header { 
       display: flex; 
@@ -144,7 +142,7 @@
       align-items: center; 
       margin-bottom: 12px; 
       gap: 8px; 
-      flex-wrap: nowrap; /* Bắt buộc nằm chung 1 hàng */
+      flex-wrap: nowrap; 
     }
     .history-title { 
       font-size: 13px; 
@@ -159,7 +157,7 @@
     .history-title span {
       white-space: nowrap;
       overflow: hidden;
-      text-overflow: ellipsis; /* Tự động co rút dấu ... nếu màn hình quá nhỏ */
+      text-overflow: ellipsis; 
     }
     .history-title svg {
       flex-shrink: 0;
@@ -176,7 +174,7 @@
       align-items: center; 
       gap: 5px; 
       white-space: nowrap; 
-      flex-shrink: 0; /* Không cho nút bị co ép hay rớt dòng */
+      flex-shrink: 0; 
     }
     .btn-refresh:hover { background: #311a28; color: var(--red); border-color: var(--red); }
     
@@ -299,7 +297,10 @@
           <div class="field-note">Khóa giải mã chỉ người gửi và bạn nắm giữ.</div>
         </div>
 
-        <button class="primary" id="btnDecrypt" onclick="downloadAndDecrypt()">Tải Về & Giải Mã</button>
+        <div class="actions">
+          <button class="primary" id="btnDecrypt" onclick="downloadAndDecrypt()">Tải Về & Giải Mã</button>
+          <button class="secondary" type="button" onclick="clearReceiveInputs()">Xóa lựa chọn</button>
+        </div>
 
         <div id="downloadResult" class="result-box hidden"></div>
       </section>
