@@ -202,16 +202,32 @@ function clearSelectedFiles() {
     selectedFiles = [];
     renderFileList();
     
-    // ĐÃ SỬA: Ẩn và làm sạch khung kết quả tải lên trước đó
+    // Ẩn và làm sạch khung kết quả tải lên trước đó
     const uploadResult = document.getElementById('uploadResult');
     if (uploadResult) {
         uploadResult.classList.add('hidden');
         uploadResult.innerHTML = '';
     }
     
-    // Reset luôn giá trị thẻ input file để có thể chọn lại chính file vừa gửi nếu muốn
     const fileInput = document.getElementById('fileInput');
     if (fileInput) fileInput.value = '';
+}
+
+// Xóa lựa chọn form Nhận tệp
+function clearReceiveInputs() {
+    const fileIdInput = document.getElementById('fileIdInput');
+    const keyInput = document.getElementById('keyInput');
+    const downloadResult = document.getElementById('downloadResult');
+
+    if (fileIdInput) fileIdInput.value = '';
+    if (keyInput) keyInput.value = '';
+    
+    if (downloadResult) {
+        downloadResult.classList.add('hidden');
+        downloadResult.innerHTML = '';
+    }
+
+    showToast('🗑️ Đã xóa thông tin nhận tệp!');
 }
 
 // Helpers Convert ArrayBuffer
